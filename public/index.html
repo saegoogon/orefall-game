@@ -148,19 +148,38 @@
                 </linearGradient>
               </defs>
             </svg>
-            <svg class="stage-art stage-boss" viewBox="0 0 320 320" fill="none" aria-hidden="true">
-              <path d="M87 284C64 264 45 222 47 181C50 127 86 86 131 73C183 58 244 85 266 140C288 194 271 257 231 286L87 284Z" fill="url(#bossBody)"/>
-              <path d="M102 78L78 28L121 52L102 78Z" fill="#FFD8AA"/>
-              <path d="M225 82L246 28L202 52L225 82Z" fill="#FFD8AA"/>
-              <circle cx="118" cy="157" r="15" fill="#FFD166"/>
-              <circle cx="202" cy="157" r="15" fill="#FFD166"/>
-              <circle cx="160" cy="214" r="26" fill="#FF7A59"/>
-              <circle cx="160" cy="214" r="44" fill="#FF7A59" fill-opacity="0.18"/>
+            <svg class="stage-art stage-boss" viewBox="0 0 360 320" fill="none" aria-hidden="true">
+              <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#bossWingBack)"/>
+              <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
+              <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
+              <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#bossBodyMain)"/>
+              <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
+              <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
+              <path d="M91 182L66 138L103 151L91 182Z" fill="#CF9D73"/>
+              <path d="M272 181L295 137L258 151L272 181Z" fill="#CF9D73"/>
+              <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
+              <path d="M137 213L152 198L168 213" stroke="#FFC9B8" stroke-width="6" stroke-linecap="round"/>
+              <path d="M192 213L208 198L223 213" stroke="#FFC9B8" stroke-width="6" stroke-linecap="round"/>
+              <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
+              <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
+              <circle cx="181" cy="214" r="28" fill="url(#bossCoreGlow)"/>
+              <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
+              <path d="M176 111C194 116 210 122 224 136" stroke="#64748B" stroke-width="8" stroke-linecap="round"/>
+              <path d="M133 136C147 122 163 116 181 111" stroke="#64748B" stroke-width="8" stroke-linecap="round"/>
               <defs>
-                <linearGradient id="bossBody" x1="160" y1="67" x2="160" y2="286" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#334155"/>
+                <linearGradient id="bossWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3B475C"/>
+                  <stop offset="1" stop-color="#111827"/>
+                </linearGradient>
+                <linearGradient id="bossBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#475569"/>
                   <stop offset="1" stop-color="#0F172A"/>
                 </linearGradient>
+                <radialGradient id="bossCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
+                  <stop stop-color="#FFD166"/>
+                  <stop offset="0.55" stop-color="#FF8A65"/>
+                  <stop offset="1" stop-color="#E11D48"/>
+                </radialGradient>
               </defs>
             </svg>
           </div>
@@ -211,19 +230,32 @@
             <span id="boss-floor-badge" class="badge">10층</span>
           </div>
           <div class="boss-card">
-            <svg class="boss-illustration" viewBox="0 0 320 320" fill="none" aria-hidden="true">
-              <path d="M87 284C64 264 45 222 47 181C50 127 86 86 131 73C183 58 244 85 266 140C288 194 271 257 231 286L87 284Z" fill="url(#bossPanelBody)"/>
-              <path d="M102 78L78 28L121 52L102 78Z" fill="#FFD8AA"/>
-              <path d="M225 82L246 28L202 52L225 82Z" fill="#FFD8AA"/>
-              <circle cx="118" cy="157" r="15" fill="#FFD166"/>
-              <circle cx="202" cy="157" r="15" fill="#FFD166"/>
-              <circle cx="160" cy="214" r="26" fill="#FF7A59"/>
-              <circle cx="160" cy="214" r="44" fill="#FF7A59" fill-opacity="0.18"/>
+            <svg class="boss-illustration" viewBox="0 0 360 320" fill="none" aria-hidden="true">
+              <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#panelWingBack)"/>
+              <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
+              <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
+              <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#panelBodyMain)"/>
+              <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
+              <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
+              <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
+              <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
+              <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
+              <circle cx="181" cy="214" r="28" fill="url(#panelCoreGlow)"/>
+              <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
               <defs>
-                <linearGradient id="bossPanelBody" x1="160" y1="67" x2="160" y2="286" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#334155"/>
+                <linearGradient id="panelWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3B475C"/>
+                  <stop offset="1" stop-color="#111827"/>
+                </linearGradient>
+                <linearGradient id="panelBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#475569"/>
                   <stop offset="1" stop-color="#0F172A"/>
                 </linearGradient>
+                <radialGradient id="panelCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
+                  <stop stop-color="#FFD166"/>
+                  <stop offset="0.55" stop-color="#FF8A65"/>
+                  <stop offset="1" stop-color="#E11D48"/>
+                </radialGradient>
               </defs>
             </svg>
             <div class="boss-info">

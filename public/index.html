@@ -1,209 +1,151 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Orefall Idle Online</title>
+    <title>Blackforge Market</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="aurora aurora-left"></div>
-    <div class="aurora aurora-right"></div>
-    <div class="grid-noise"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
     <div id="impact-layer" class="impact-layer" aria-hidden="true"></div>
 
     <div id="auth-modal" class="overlay visible">
       <section class="auth-card">
-        <svg class="auth-logo" viewBox="0 0 256 256" fill="none" aria-hidden="true">
-          <rect width="256" height="256" rx="56" fill="#071522"/>
-          <path d="M53 181L96 58H131L88 181H53Z" fill="url(#authLogoA)"/>
-          <path d="M121 181L164 58H201L158 181H121Z" fill="url(#authLogoB)"/>
-          <circle cx="184" cy="76" r="18" fill="#FFB86C"/>
-          <circle cx="184" cy="76" r="32" fill="#FFB86C" fill-opacity="0.18"/>
-          <defs>
-            <linearGradient id="authLogoA" x1="92" y1="58" x2="92" y2="181" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#67E8F9"/>
-              <stop offset="1" stop-color="#2DD4BF"/>
-            </linearGradient>
-            <linearGradient id="authLogoB" x1="160" y1="58" x2="160" y2="181" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#C4B5FD"/>
-              <stop offset="1" stop-color="#60A5FA"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <p class="eyebrow">Orefall Online</p>
-        <h1>심연 광산에 접속</h1>
+        <div class="terminal-tag">SECURE NODE / INVITE ONLY</div>
+        <h1>BLACKFORGE MARKET</h1>
         <p class="auth-copy">
-          광산을 확장하고, 자동 설비를 증설하고, 서버 랭킹 최상단까지
-          올라가는 웹 방치형 RPG.
+          A hidden forge board where broken weapons become profit. Enhance risky gear, strip dead dragons, and climb the private ranking feed.
         </p>
-        <div class="auth-preview">
-          <div class="preview-core"></div>
-          <div class="preview-shard shard-a"></div>
-          <div class="preview-shard shard-b"></div>
-          <div class="preview-shard shard-c"></div>
+        <div class="auth-console">
+          <div class="console-row"><span>STATUS</span><strong>HIDDEN NETWORK LIVE</strong></div>
+          <div class="console-row"><span>FEED</span><strong>UPGRADE THREAD OPEN</strong></div>
+          <div class="console-row"><span>RISK</span><strong>HIGH / PROFIT MAX</strong></div>
         </div>
         <div class="auth-controls">
-          <input id="username-input" class="text-input" maxlength="20" placeholder="닉네임 입력" />
+          <input id="username-input" class="text-input" maxlength="20" placeholder="Enter handle" />
           <div class="auth-actions">
-            <button id="register-button" class="primary-button">새 계정 만들기</button>
-            <button id="login-button" class="ghost-button">기존 계정 로그인</button>
+            <button id="register-button" class="primary-button">Create Handle</button>
+            <button id="login-button" class="ghost-button">Login</button>
           </div>
         </div>
-        <p id="auth-status" class="muted-text">닉네임만 입력하면 바로 시작할 수 있다.</p>
+        <p id="auth-status" class="muted-text">Drop a handle and enter the board instantly.</p>
       </section>
     </div>
 
     <main class="app-shell">
       <header class="topbar panel">
         <div class="brand-lockup">
-          <svg class="brand-logo" viewBox="0 0 256 256" fill="none" aria-hidden="true">
-            <rect width="256" height="256" rx="56" fill="#071522"/>
-            <path d="M53 181L96 58H131L88 181H53Z" fill="url(#brandLogoA)"/>
-            <path d="M121 181L164 58H201L158 181H121Z" fill="url(#brandLogoB)"/>
-            <circle cx="184" cy="76" r="18" fill="#FFB86C"/>
-            <circle cx="184" cy="76" r="32" fill="#FFB86C" fill-opacity="0.18"/>
-            <defs>
-              <linearGradient id="brandLogoA" x1="92" y1="58" x2="92" y2="181" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#67E8F9"/>
-                <stop offset="1" stop-color="#2DD4BF"/>
-              </linearGradient>
-              <linearGradient id="brandLogoB" x1="160" y1="58" x2="160" y2="181" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#C4B5FD"/>
-                <stop offset="1" stop-color="#60A5FA"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <div class="brand-mark">BF</div>
           <div>
-          <p class="eyebrow">Server-Backed Idle RPG</p>
-          <h2>Orefall Idle Online</h2>
+            <p class="eyebrow">Black Market Enhancement Board</p>
+            <h2>Blackforge Market</h2>
           </div>
         </div>
         <div class="topbar-actions">
           <div class="chip">
-            <span>계정</span>
+            <span>HANDLE</span>
             <strong id="username-label">Guest</strong>
           </div>
           <div class="chip premium">
-            <span>프리미엄 젬</span>
+            <span>BLACK GEMS</span>
             <strong id="premium-gems">0</strong>
           </div>
-          <button id="sound-button" class="ghost-button small-button">사운드 ON</button>
-          <button id="save-button" class="ghost-button small-button">서버 저장</button>
+          <button id="sound-button" class="ghost-button small-button">AUDIO ON</button>
+          <button id="save-button" class="ghost-button small-button">SYNC</button>
         </div>
       </header>
 
       <section class="hero-grid">
         <article class="panel hero-panel">
           <div class="hero-copy-block">
-            <p class="eyebrow">Depth Rush</p>
-            <h1 id="hero-title">심연 1층</h1>
+            <p class="eyebrow">Thread 01 / Forbidden Forge</p>
+            <h1 id="hero-title">Forge Rank 1</h1>
             <p id="hero-copy" class="hero-copy">
-              자동 설비를 키우고 보스를 돌파해 서버 랭킹 1위를 차지해라.
+              Feed cursed scrap into the blade and force another illegal enhancement. Every rank raises value, risk, and the chance the market notices.
             </p>
             <div class="hero-actions">
-              <button id="mine-button" class="primary-button">광맥 타격</button>
-              <button id="fight-button" class="secondary-button">전투 개시</button>
-              <button id="boss-button" class="accent-button">보스 돌진</button>
+              <button id="mine-button" class="primary-button">Random Enhance</button>
+              <button id="fight-button" class="secondary-button">Strip Target</button>
+              <button id="boss-button" class="accent-button">Trace Dragon</button>
             </div>
           </div>
 
           <div class="hero-stage">
-            <svg class="stage-art stage-rig" viewBox="0 0 360 320" fill="none" aria-hidden="true">
-              <rect x="112" y="118" width="28" height="140" rx="14" fill="url(#rigA)"/>
-              <rect x="123" y="62" width="136" height="18" rx="9" transform="rotate(-15 123 62)" fill="url(#rigB)"/>
-              <rect x="246" y="71" width="8" height="122" rx="4" fill="url(#rigC)"/>
-              <path d="M86 282H234L198 222H122L86 282Z" fill="#134E4A"/>
-              <path d="M72 290H248" stroke="#D6F6FF" stroke-width="10" stroke-linecap="round"/>
-              <circle cx="128" cy="116" r="14" fill="#F8FAFC"/>
-              <circle cx="128" cy="116" r="28" fill="#67E8F9" fill-opacity="0.14"/>
-              <defs>
-                <linearGradient id="rigA" x1="126" y1="118" x2="126" y2="258" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#F8FAFC"/>
-                  <stop offset="1" stop-color="#38BDF8"/>
-                </linearGradient>
-                <linearGradient id="rigB" x1="191" y1="62" x2="191" y2="80" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#E0F2FE"/>
-                  <stop offset="1" stop-color="#60A5FA"/>
-                </linearGradient>
-                <linearGradient id="rigC" x1="250" y1="71" x2="250" y2="193" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#7DD3FC"/>
-                  <stop offset="1" stop-color="#0EA5E9" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <svg class="stage-art stage-ore" viewBox="0 0 320 220" fill="none" aria-hidden="true">
-              <path d="M91 198L31 140L63 59L136 39L185 92L158 184L91 198Z" fill="url(#oreA)" stroke="#C8FCFF" stroke-width="6"/>
-              <path d="M166 180L129 110L176 48L250 49L287 120L251 184L166 180Z" fill="url(#oreB)" stroke="#D7EEFF" stroke-width="6"/>
-              <path d="M117 169L97 90" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
-              <path d="M209 162L228 73" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
-              <defs>
-                <linearGradient id="oreA" x1="108" y1="39" x2="108" y2="198" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#7DD3FC"/>
-                  <stop offset="1" stop-color="#0F766E"/>
-                </linearGradient>
-                <linearGradient id="oreB" x1="208" y1="48" x2="208" y2="184" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#DDD6FE"/>
-                  <stop offset="1" stop-color="#3B82F6"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <svg class="stage-art stage-boss" viewBox="0 0 360 320" fill="none" aria-hidden="true">
-              <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#bossWingBack)"/>
-              <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
-              <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
-              <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#bossBodyMain)"/>
-              <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
-              <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
-              <path d="M91 182L66 138L103 151L91 182Z" fill="#CF9D73"/>
-              <path d="M272 181L295 137L258 151L272 181Z" fill="#CF9D73"/>
-              <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
-              <path d="M137 213L152 198L168 213" stroke="#FFC9B8" stroke-width="6" stroke-linecap="round"/>
-              <path d="M192 213L208 198L223 213" stroke="#FFC9B8" stroke-width="6" stroke-linecap="round"/>
-              <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
-              <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
-              <circle cx="181" cy="214" r="28" fill="url(#bossCoreGlow)"/>
-              <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
-              <path d="M176 111C194 116 210 122 224 136" stroke="#64748B" stroke-width="8" stroke-linecap="round"/>
-              <path d="M133 136C147 122 163 116 181 111" stroke="#64748B" stroke-width="8" stroke-linecap="round"/>
-              <defs>
-                <linearGradient id="bossWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#3B475C"/>
-                  <stop offset="1" stop-color="#111827"/>
-                </linearGradient>
-                <linearGradient id="bossBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#475569"/>
-                  <stop offset="1" stop-color="#0F172A"/>
-                </linearGradient>
-                <radialGradient id="bossCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
-                  <stop stop-color="#FFD166"/>
-                  <stop offset="0.55" stop-color="#FF8A65"/>
-                  <stop offset="1" stop-color="#E11D48"/>
-                </radialGradient>
-              </defs>
-            </svg>
+            <div class="stage-grid"></div>
+            <div class="weapon-card">
+              <div class="weapon-card__glow"></div>
+              <div class="weapon-card__name">VOID EDGE // +17</div>
+              <div class="weapon-card__frame">
+                <div class="blade blade-main"></div>
+                <div class="blade blade-core"></div>
+                <div class="blade blade-hilt"></div>
+              </div>
+              <div class="weapon-card__stats">
+                <span>RATE 34%</span>
+                <span>RISK OVERHEAT</span>
+              </div>
+            </div>
+            <div class="terminal-panel terminal-left">
+              <div class="terminal-line">[UPGRADE LOG] seed injection complete</div>
+              <div class="terminal-line">[DROP TABLE] cursed shard acquired</div>
+              <div class="terminal-line">[NOTICE] market watchers detected</div>
+            </div>
+            <div class="dragon-panel">
+              <svg class="dragon-art" viewBox="0 0 360 320" fill="none" aria-hidden="true">
+                <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#stageWingBack)"/>
+                <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
+                <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
+                <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#stageBodyMain)"/>
+                <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
+                <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
+                <path d="M91 182L66 138L103 151L91 182Z" fill="#CF9D73"/>
+                <path d="M272 181L295 137L258 151L272 181Z" fill="#CF9D73"/>
+                <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
+                <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
+                <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
+                <circle cx="181" cy="214" r="28" fill="url(#stageCoreGlow)"/>
+                <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
+                <defs>
+                  <linearGradient id="stageWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#3B475C"/>
+                    <stop offset="1" stop-color="#111827"/>
+                  </linearGradient>
+                  <linearGradient id="stageBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#475569"/>
+                    <stop offset="1" stop-color="#0F172A"/>
+                  </linearGradient>
+                  <radialGradient id="stageCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
+                    <stop stop-color="#FFD166"/>
+                    <stop offset="0.55" stop-color="#FF8A65"/>
+                    <stop offset="1" stop-color="#E11D48"/>
+                  </radialGradient>
+                </defs>
+              </svg>
+            </div>
           </div>
         </article>
 
         <article class="panel sync-panel">
           <div class="panel-heading">
-            <h3>원정 상태</h3>
-            <span id="sync-badge" class="badge">대기 중</span>
+            <h3>NODE STATUS</h3>
+            <span id="sync-badge" class="badge">IDLE</span>
           </div>
-          <p id="sync-text" class="muted-text">로그인 후 서버 동기화가 시작된다.</p>
+          <p id="sync-text" class="muted-text">Server thread is stable and waiting for the next sync.</p>
           <div class="mini-stats">
             <div class="mini-card">
-              <span>최근 저장</span>
-              <strong id="offline-label">없음</strong>
+              <span>LAST SYNC</span>
+              <strong id="offline-label">NONE</strong>
             </div>
             <div class="mini-card">
-              <span>결제 공급자</span>
-              <strong id="payment-provider">toss</strong>
+              <span>PAYMENT</span>
+              <strong id="payment-provider">coming soon</strong>
             </div>
           </div>
           <div class="status-banner">
-            <strong>프리미엄 상점</strong>
-            <p>현재는 준비중이며, 게임 플레이와 랭킹 경쟁은 바로 즐길 수 있다.</p>
+            <strong>BLACK MARKET NOTICE</strong>
+            <p>Premium trade is still locked. The live build is open for free board testing while payments stay offline.</p>
           </div>
         </article>
       </section>
@@ -211,23 +153,23 @@
       <section class="dashboard-grid">
         <article class="panel">
           <div class="panel-heading">
-            <h3>자원 대시보드</h3>
-            <span class="badge">실시간</span>
+            <h3>RESOURCE CACHE</h3>
+            <span class="badge">LIVE</span>
           </div>
           <div class="stats-grid">
-            <div class="stat-card stat-gold"><span>금화</span><strong id="gold-stat">0</strong></div>
-            <div class="stat-card stat-ore"><span>광석</span><strong id="ore-stat">0</strong></div>
-            <div class="stat-card stat-crystal"><span>결정</span><strong id="crystal-stat">0</strong></div>
-            <div class="stat-card stat-core"><span>코어</span><strong id="core-stat">0</strong></div>
-            <div class="stat-card stat-power"><span>전투력</span><strong id="power-stat">0</strong></div>
-            <div class="stat-card stat-rate"><span>초당 채굴</span><strong id="ore-rate-stat">0</strong></div>
+            <div class="stat-card stat-gold"><span>CREDITS</span><strong id="gold-stat">0</strong></div>
+            <div class="stat-card stat-ore"><span>SCRAP</span><strong id="ore-stat">0</strong></div>
+            <div class="stat-card stat-crystal"><span>CURSED SHARDS</span><strong id="crystal-stat">0</strong></div>
+            <div class="stat-card stat-core"><span>VOID CORES</span><strong id="core-stat">0</strong></div>
+            <div class="stat-card stat-power"><span>FORGE POWER</span><strong id="power-stat">0</strong></div>
+            <div class="stat-card stat-rate"><span>PASSIVE RATE</span><strong id="ore-rate-stat">0</strong></div>
           </div>
         </article>
 
         <article class="panel boss-panel">
           <div class="panel-heading">
-            <h3>보스 전투</h3>
-            <span id="boss-floor-badge" class="badge">10층</span>
+            <h3>DRAGON TRACE</h3>
+            <span id="boss-floor-badge" class="badge">10TH NODE</span>
           </div>
           <div class="boss-card">
             <svg class="boss-illustration" viewBox="0 0 360 320" fill="none" aria-hidden="true">
@@ -237,7 +179,6 @@
               <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#panelBodyMain)"/>
               <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
               <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
-              <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
               <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
               <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
               <circle cx="181" cy="214" r="28" fill="url(#panelCoreGlow)"/>
@@ -259,20 +200,20 @@
               </defs>
             </svg>
             <div class="boss-info">
-              <p id="boss-name" class="boss-name">Crag Maw</p>
+              <p id="boss-name" class="boss-name">CRAG MAW</p>
               <div class="health-track">
                 <div id="boss-health-fill" class="health-fill"></div>
               </div>
               <p id="boss-health-text" class="muted-text">0 / 0</p>
-              <p id="combat-text" class="combat-text">광산 아래쪽에서 괴성이 들린다.</p>
+              <p id="combat-text" class="combat-text">Signal noise says a dragon-class target is nearby.</p>
             </div>
           </div>
         </article>
 
         <article class="panel leaderboard-panel">
           <div class="panel-heading">
-            <h3>서버 랭킹</h3>
-            <span class="badge">Top 10</span>
+            <h3>TOP HANDLES</h3>
+            <span class="badge">TOP 10</span>
           </div>
           <div id="leaderboard-list" class="list"></div>
         </article>
@@ -281,48 +222,48 @@
       <section class="content-grid">
         <article class="panel">
           <div class="panel-heading">
-            <h3>자동화 설비</h3>
-            <span class="badge">광석 소모</span>
+            <h3>FORGE STACK</h3>
+            <span class="badge">SCRAP COST</span>
           </div>
           <div id="upgrade-list" class="list"></div>
         </article>
 
         <article class="panel">
           <div class="panel-heading">
-            <h3>연구소</h3>
-            <span class="badge">금화 소모</span>
+            <h3>LAB PATCHES</h3>
+            <span class="badge">CREDIT COST</span>
           </div>
           <div id="lab-list" class="list"></div>
         </article>
 
         <article class="panel">
           <div class="panel-heading">
-            <h3>미션</h3>
-            <span class="badge">보상</span>
+            <h3>FORUM MISSIONS</h3>
+            <span class="badge">REWARDS</span>
           </div>
           <div id="quest-list" class="list"></div>
         </article>
 
         <article class="panel">
           <div class="panel-heading">
-            <h3>프리미엄 상점</h3>
-            <span class="badge">준비중</span>
+            <h3>PREMIUM THREAD</h3>
+            <span class="badge">LOCKED</span>
           </div>
           <div id="store-list" class="list"></div>
         </article>
 
         <article class="panel">
           <div class="panel-heading">
-            <h3>드릴 스킨</h3>
-            <span class="badge">꾸미기</span>
+            <h3>SKIN VAULT</h3>
+            <span class="badge">LOADOUT</span>
           </div>
           <div id="skin-list" class="list"></div>
         </article>
 
         <article class="panel logs-panel">
           <div class="panel-heading">
-            <h3>원정 로그</h3>
-            <span class="badge">최근 24개</span>
+            <h3>LIVE THREAD LOG</h3>
+            <span class="badge">24 ENTRIES</span>
           </div>
           <div id="log-list" class="log-list"></div>
         </article>
@@ -330,9 +271,9 @@
     </main>
 
     <div class="mobile-action-bar">
-      <button id="mine-button-mobile" class="primary-button">채굴</button>
-      <button id="fight-button-mobile" class="secondary-button">전투</button>
-      <button id="boss-button-mobile" class="accent-button">보스</button>
+      <button id="mine-button-mobile" class="primary-button">Enhance</button>
+      <button id="fight-button-mobile" class="secondary-button">Strip</button>
+      <button id="boss-button-mobile" class="accent-button">Dragon</button>
     </div>
 
     <script src="https://js.tosspayments.com/v2/standard"></script>

@@ -16,7 +16,7 @@ const API = {
 
     const payload = await response.json();
     if (!response.ok) {
-      throw new Error(payload.error || "요청에 실패했습니다.");
+      throw new Error(payload.error || "Request failed.");
     }
     if (payload.csrfToken) {
       API.csrfToken = payload.csrfToken;
@@ -29,26 +29,26 @@ const TICK_MS = 1000;
 const SAVE_INTERVAL_MS = 10000;
 
 const upgrades = [
-  { id: "drill", title: "다이아 드릴", costBase: 25, growth: 1.6, description: "클릭 채굴량과 전투력이 함께 증가한다." },
-  { id: "crew", title: "광부 분대", costBase: 45, growth: 1.7, description: "초당 자동 채굴량이 크게 상승한다." },
-  { id: "forge", title: "심연 제련로", costBase: 70, growth: 1.8, description: "전투력 성장 속도를 빠르게 끌어올린다." },
-  { id: "scanner", title: "균열 스캐너", costBase: 90, growth: 1.95, description: "결정 발견과 보스 보상 효율을 높인다." },
+  { id: "drill", title: "Seed Injector", costBase: 25, growth: 1.6, description: "Raises random enhance output and direct strip damage." },
+  { id: "crew", title: "Scrap Runners", costBase: 45, growth: 1.7, description: "Boosts passive scrap income from off-grid workers." },
+  { id: "forge", title: "Blackforge Loop", costBase: 70, growth: 1.8, description: "Adds heavy pressure to the core enhancement stack." },
+  { id: "scanner", title: "Trace Scanner", costBase: 90, growth: 1.95, description: "Improves cursed shard drops and dragon trail rewards." },
 ];
 
 const labUpgrades = [
-  { id: "overclock", title: "오버클럭", costBase: 150, growth: 2, description: "전투력의 영구 배율이 상승한다." },
-  { id: "logistics", title: "물류 증폭", costBase: 180, growth: 2.05, description: "자동 채굴량의 영구 배율이 상승한다." },
-  { id: "luck", title: "희귀 탐사학", costBase: 220, growth: 2.15, description: "결정과 보스 보상이 더 자주 터진다." },
+  { id: "overclock", title: "Heat Overclock", costBase: 150, growth: 2, description: "Amplifies all strip damage through unstable tuning." },
+  { id: "logistics", title: "Ghost Logistics", costBase: 180, growth: 2.05, description: "Increases passive scrap flow through hidden routes." },
+  { id: "luck", title: "Black Signal", costBase: 220, growth: 2.15, description: "Raises shard luck and rare board reward frequency." },
 ];
 
 const skinCatalog = [
-  { id: "default", name: "Default Drill", description: "기본 외형." },
-  { id: "founder-gold", name: "Founder Gold", description: "향후 프리미엄 상점에서 지급될 황금 외형." },
+  { id: "default", name: "Rust Default", description: "The base loadout every new handle starts with." },
+  { id: "founder-gold", name: "Founder Gold", description: "Reserved skin for future premium buyers." },
 ];
 
 const state = {
   profile: null,
-  paymentProvider: "toss",
+  paymentProvider: "coming soon",
   paymentEnabled: false,
   soundEnabled: true,
   audioContext: null,
@@ -98,7 +98,7 @@ const elements = {
 };
 
 function number(value) {
-  return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: value > 100 ? 0 : 1 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: value > 100 ? 0 : 1 }).format(value);
 }
 
 function getGameState() {
@@ -145,24 +145,24 @@ function playSound(type) {
 
   if (type === "mine") {
     oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(440, now);
-    oscillator.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+    oscillator.frequency.setValueAtTime(520, now);
+    oscillator.frequency.exponentialRampToValueAtTime(340, now + 0.08);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.09, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
   } else if (type === "boss") {
     oscillator.type = "sawtooth";
     oscillator.frequency.setValueAtTime(180, now);
-    oscillator.frequency.exponentialRampToValueAtTime(80, now + 0.18);
+    oscillator.frequency.exponentialRampToValueAtTime(70, now + 0.18);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.13, now + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
   } else {
     oscillator.type = "square";
-    oscillator.frequency.setValueAtTime(280, now);
-    oscillator.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+    oscillator.frequency.setValueAtTime(260, now);
+    oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.14);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.09, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
   }
 
@@ -202,8 +202,8 @@ function calcPower(gameState) {
   const drillPower = 1 + gameState.upgrades.drill * 2;
   const forgePower = 4 + gameState.upgrades.forge * 3;
   const labPower = 1 + gameState.lab.overclock * 0.18;
-  const ascensionPower = 1 + gameState.resources.cores * 0.12;
-  return Math.floor((drillPower + forgePower + Math.floor(gameState.progression.depth / 2)) * labPower * ascensionPower);
+  const corePower = 1 + gameState.resources.cores * 0.12;
+  return Math.floor((drillPower + forgePower + Math.floor(gameState.progression.depth / 2)) * labPower * corePower);
 }
 
 function calcOrePerSecond(gameState) {
@@ -256,22 +256,22 @@ function advanceBossState(gameState) {
   if (gameState.progression.depth >= gameState.progression.bossFloor) {
     gameState.resources.cores += 1;
     gameState.progression.bossFloor += 10;
-    pushLog("보스를 돌파하고 코어 1개를 확보했다.");
+    pushLog("Dragon target burned out. Void core secured.");
   }
 
   gameState.progression.depth += 1;
   const nextHp = Math.floor(120 * (1 + (gameState.progression.depth - 1) * 0.22));
   gameState.boss = {
-    name: `Depth ${gameState.progression.depth} Warden`,
+    name: `Dragon Node ${gameState.progression.depth}`,
     hp: nextHp,
     maxHp: nextHp,
     ready: gameState.progression.depth >= gameState.progression.bossFloor,
   };
-  pushLog(`심연 ${gameState.progression.depth}층으로 내려갔다.`);
+  pushLog(`Board rank advanced to forge node ${gameState.progression.depth}.`);
   updateQuestProgress(gameState);
 }
 
-function attackBoss(auto = false) {
+function attackBoss(auto = false, sourceButton = elements.fightButton) {
   const gameState = getGameState();
   if (!gameState) {
     return;
@@ -280,10 +280,10 @@ function attackBoss(auto = false) {
   gameState.boss.hp = Math.max(0, gameState.boss.hp - damage);
   gameState.stats.damageDealt += damage;
   elements.combatText.textContent = auto
-    ? `자동 포탑이 ${number(damage)} 피해를 입혔다.`
-    : `${number(damage)} 피해를 입혔다.`;
-  if (!auto) {
-    const point = buttonCenter(elements.fightButton);
+    ? `Auto-strip thread dealt ${number(damage)} damage.`
+    : `Manual strip dealt ${number(damage)} damage.`;
+  if (!auto && sourceButton) {
+    const point = buttonCenter(sourceButton);
     spawnFeedback(`-${number(damage)}`, point.x, point.y, "hit");
     shake(document.querySelector(".boss-panel"));
     playSound("boss");
@@ -291,7 +291,7 @@ function attackBoss(auto = false) {
   advanceBossState(gameState);
 }
 
-function mine() {
+function mine(sourceButton = elements.mineButton) {
   const gameState = getGameState();
   if (!gameState) {
     return;
@@ -303,12 +303,14 @@ function mine() {
 
   if (Math.random() < 0.05 + gameState.upgrades.scanner * 0.01 + gameState.lab.luck * 0.02) {
     gameState.resources.crystals += 1;
-    pushLog("광맥에서 결정이 튀어나왔다.");
+    pushLog("A cursed shard flashed out of the scrap heap.");
   }
 
   updateQuestProgress(gameState);
-  const point = buttonCenter(elements.mineButton);
-  spawnFeedback(`+${number(gain)} 광석`, point.x, point.y, "mine");
+  if (sourceButton) {
+    const point = buttonCenter(sourceButton);
+    spawnFeedback(`+${number(gain)} scrap`, point.x, point.y, "mine");
+  }
   playSound("mine");
   render();
 }
@@ -316,26 +318,32 @@ function mine() {
 function buyUpgrade(id) {
   const gameState = getGameState();
   const entry = upgrades.find((item) => item.id === id);
+  if (!entry) {
+    return;
+  }
   const cost = costFor(entry, gameState.upgrades[id]);
   if (gameState.resources.ore < cost) {
     return;
   }
   gameState.resources.ore -= cost;
   gameState.upgrades[id] += 1;
-  pushLog(`${entry.title} 레벨이 ${gameState.upgrades[id]}이 되었다.`);
+  pushLog(`${entry.title} reached tier ${gameState.upgrades[id]}.`);
   render();
 }
 
 function buyLab(id) {
   const gameState = getGameState();
   const entry = labUpgrades.find((item) => item.id === id);
+  if (!entry) {
+    return;
+  }
   const cost = costFor(entry, gameState.lab[id]);
   if (gameState.resources.gold < cost) {
     return;
   }
   gameState.resources.gold -= cost;
   gameState.lab[id] += 1;
-  pushLog(`${entry.title} 연구가 ${gameState.lab[id]}단계가 되었다.`);
+  pushLog(`${entry.title} patch upgraded to tier ${gameState.lab[id]}.`);
   render();
 }
 
@@ -346,10 +354,10 @@ async function claimQuest(id) {
       body: { questId: id },
     });
     state.profile = payload.profile;
-    setSync("보상 수령 완료", "서버에서 퀘스트 보상이 반영되었다.");
+    setSync("REWARD CLAIMED", "Server confirmed the board payout.");
     render();
   } catch (error) {
-    setSync("수령 실패", error.message, true);
+    setSync("CLAIM FAILED", error.message, true);
   }
 }
 
@@ -359,7 +367,7 @@ function selectSkin(id) {
     return;
   }
   gameState.cosmetics.activeSkin = id;
-  pushLog(`${skinCatalog.find((item) => item.id === id)?.name || id} 스킨을 장착했다.`);
+  pushLog(`${skinCatalog.find((item) => item.id === id)?.name || id} is now active.`);
   render();
 }
 
@@ -404,7 +412,7 @@ function createLogNode(entry) {
   const node = document.createElement("div");
   node.className = "log-entry";
   const strong = document.createElement("strong");
-  strong.textContent = "기록";
+  strong.textContent = "LOG";
   node.appendChild(strong);
   node.appendChild(document.createTextNode(` ${entry.text}`));
   return node;
@@ -417,7 +425,7 @@ function createLeaderboardNode(entry, index) {
   strong.textContent = `#${index + 1} ${entry.username}`;
   const meta = document.createElement("span");
   meta.className = "item-meta";
-  meta.textContent = `${entry.depth}층 · 전투력 ${number(entry.power)}`;
+  meta.textContent = `Node ${entry.depth} | Power ${number(entry.power)}`;
   node.appendChild(strong);
   node.appendChild(meta);
   return node;
@@ -434,23 +442,23 @@ function render() {
   elements.authModal.classList.remove("visible");
   elements.usernameLabel.textContent = state.profile.username;
   elements.premiumGems.textContent = number(gameState.resources.premiumGems);
-  elements.heroTitle.textContent = `심연 ${gameState.progression.depth}층`;
-  elements.heroCopy.textContent = `${gameState.cosmetics.activeSkin} 스킨 장착 중. 서버 저장과 랭킹 경쟁이 실시간으로 이어지고 있다.`;
-  elements.soundButton.textContent = state.soundEnabled ? "사운드 ON" : "사운드 OFF";
-  elements.offlineLabel.textContent = new Date(gameState.lastUpdatedAt).toLocaleTimeString("ko-KR", {
+  elements.heroTitle.textContent = `Forge Rank ${gameState.progression.depth}`;
+  elements.heroCopy.textContent = `${gameState.cosmetics.activeSkin} loadout active. The board keeps tracking every risky enhance and illegal dragon strip in real time.`;
+  elements.soundButton.textContent = state.soundEnabled ? "AUDIO ON" : "AUDIO OFF";
+  elements.offlineLabel.textContent = new Date(gameState.lastUpdatedAt).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   });
-  elements.paymentProvider.textContent = state.paymentProvider;
+  elements.paymentProvider.textContent = state.paymentEnabled ? state.paymentProvider : "coming soon";
 
   elements.goldStat.textContent = number(gameState.resources.gold);
   elements.oreStat.textContent = number(gameState.resources.ore);
   elements.crystalStat.textContent = number(gameState.resources.crystals);
   elements.coreStat.textContent = number(gameState.resources.cores);
   elements.powerStat.textContent = number(calcPower(gameState));
-  elements.oreRateStat.textContent = number(calcOrePerSecond(gameState));
+  elements.oreRateStat.textContent = `${number(calcOrePerSecond(gameState))}/s`;
 
-  elements.bossFloorBadge.textContent = `${gameState.progression.bossFloor}층`;
+  elements.bossFloorBadge.textContent = `${gameState.progression.bossFloor}TH NODE`;
   elements.bossName.textContent = gameState.boss.name;
   elements.bossHealthFill.style.width = `${Math.max(0, (gameState.boss.hp / gameState.boss.maxHp) * 100)}%`;
   elements.bossHealthText.textContent = `${number(gameState.boss.hp)} / ${number(gameState.boss.maxHp)}`;
@@ -461,8 +469,8 @@ function render() {
       buildCard({
         title: entry.title,
         description: entry.description,
-        meta: `Lv.${gameState.upgrades[entry.id]} | ${number(costFor(entry, gameState.upgrades[entry.id]))} 광석`,
-        buttonLabel: "강화",
+        meta: `Lv.${gameState.upgrades[entry.id]} | ${number(costFor(entry, gameState.upgrades[entry.id]))} scrap`,
+        buttonLabel: "Enhance",
         disabled: gameState.resources.ore < costFor(entry, gameState.upgrades[entry.id]),
         onClick: () => buyUpgrade(entry.id),
       }),
@@ -475,8 +483,8 @@ function render() {
       buildCard({
         title: entry.title,
         description: entry.description,
-        meta: `${gameState.lab[entry.id]}단계 | ${number(costFor(entry, gameState.lab[entry.id]))} 금화`,
-        buttonLabel: "연구",
+        meta: `Tier ${gameState.lab[entry.id]} | ${number(costFor(entry, gameState.lab[entry.id]))} credits`,
+        buttonLabel: "Patch",
         disabled: gameState.resources.gold < costFor(entry, gameState.lab[entry.id]),
         onClick: () => buyLab(entry.id),
       }),
@@ -488,9 +496,9 @@ function render() {
     gameState.quests.map((quest) =>
       buildCard({
         title: quest.label,
-        description: "완수하면 서버에서 즉시 보상을 지급한다.",
-        meta: quest.claimed ? "수령 완료" : `${quest.progress} / ${quest.goal}`,
-        buttonLabel: quest.claimed ? "완료" : quest.progress >= quest.goal ? "보상 받기" : "진행 중",
+        description: "Clear the thread target and claim instant board rewards from the server.",
+        meta: quest.claimed ? "Claimed" : `${quest.progress} / ${quest.goal}`,
+        buttonLabel: quest.claimed ? "Done" : quest.progress >= quest.goal ? "Claim" : "Pending",
         disabled: quest.claimed || quest.progress < quest.goal,
         className: "primary-button small-button",
         onClick: () => claimQuest(quest.id),
@@ -500,10 +508,10 @@ function render() {
 
   renderList(elements.storeList, [
     buildCard({
-      title: "프리미엄 상점 준비중",
-      description: "사업자 등록과 결제 연동이 끝나면 젬과 한정 스킨 판매가 열릴 예정이다.",
-      meta: "현재는 무료 공개 테스트 중",
-      buttonLabel: "준비중",
+      title: "Premium thread locked",
+      description: "Paid trade will open after business setup and payment activation. For now the board stays free to test.",
+      meta: "Free public build",
+      buttonLabel: "Locked",
       disabled: true,
       className: "secondary-button small-button",
       onClick: () => {},
@@ -516,8 +524,8 @@ function render() {
       buildCard({
         title: skin.name,
         description: skin.description,
-        meta: gameState.cosmetics.ownedSkins.includes(skin.id) ? "보유 중" : "미보유",
-        buttonLabel: gameState.cosmetics.activeSkin === skin.id ? "장착됨" : "장착",
+        meta: gameState.cosmetics.ownedSkins.includes(skin.id) ? "Owned" : "Locked",
+        buttonLabel: gameState.cosmetics.activeSkin === skin.id ? "Active" : "Equip",
         disabled: !gameState.cosmetics.ownedSkins.includes(skin.id) || gameState.cosmetics.activeSkin === skin.id,
         onClick: () => selectSkin(skin.id),
       }),
@@ -529,7 +537,7 @@ function render() {
 
 function setSync(title, body, isError = false) {
   elements.syncBadge.textContent = title;
-  elements.syncBadge.style.color = isError ? "#ffd0d0" : "";
+  elements.syncBadge.style.color = isError ? "#ffd2dc" : "";
   elements.syncText.textContent = body;
 }
 
@@ -546,14 +554,14 @@ async function syncToServer() {
     return;
   }
   try {
-    setSync("저장 중", "현재 진행도를 서버에 반영하고 있다.");
+    setSync("SYNCING", "Pushing your current board state to the server.");
     await API.request("/api/game/save", {
       method: "POST",
       body: { gameState: getGameState() },
     });
-    setSync("동기화 완료", "서버 저장이 최신 상태다.");
+    setSync("SYNCED", "Server thread is now updated.");
   } catch (error) {
-    setSync("저장 실패", error.message, true);
+    setSync("SYNC FAILED", error.message, true);
   }
 }
 
@@ -570,11 +578,11 @@ async function fetchSession() {
 async function fetchStore() {
   try {
     const config = await API.request("/api/config");
-    state.paymentProvider = config.paymentProvider;
+    state.paymentProvider = config.paymentProvider || "coming soon";
     state.paymentEnabled = Boolean(config.toss?.enabled);
     render();
   } catch (error) {
-    setSync("상점 오류", error.message, true);
+    setSync("STORE ERROR", error.message, true);
   }
 }
 
@@ -583,26 +591,26 @@ async function fetchLeaderboard() {
     const payload = await API.request("/api/leaderboard");
     renderList(elements.leaderboardList, payload.leaderboard.map(createLeaderboardNode));
   } catch (error) {
-    setSync("랭킹 오류", error.message, true);
+    setSync("BOARD ERROR", error.message, true);
   }
 }
 
 async function authenticate(mode) {
   const username = elements.usernameInput.value.trim();
   if (username.length < 2) {
-    elements.authStatus.textContent = "닉네임은 2자 이상이어야 한다.";
+    elements.authStatus.textContent = "Handle must be at least 2 characters.";
     return;
   }
 
   try {
-    elements.authStatus.textContent = "계정 처리 중...";
+    elements.authStatus.textContent = "Processing handle...";
     const payload = await API.request(`/api/auth/${mode}`, {
       method: "POST",
       body: { username },
     });
     state.profile = payload.profile;
     elements.authModal.classList.remove("visible");
-    setSync("접속 완료", `${payload.profile.username} 계정으로 로그인했다.`);
+    setSync("CONNECTED", `${payload.profile.username} entered the market board.`);
     render();
     fetchStore();
     fetchLeaderboard();
@@ -611,44 +619,35 @@ async function authenticate(mode) {
   }
 }
 
+function attemptBoss(sourceButton) {
+  const gameState = getGameState();
+  if (!gameState) {
+    return;
+  }
+  if (gameState.progression.depth < gameState.progression.bossFloor) {
+    elements.combatText.textContent = `Reach node ${gameState.progression.bossFloor} to trigger the dragon trace.`;
+    return;
+  }
+  attackBoss(false, sourceButton);
+  render();
+}
+
 elements.registerButton.addEventListener("click", () => authenticate("register"));
 elements.loginButton.addEventListener("click", () => authenticate("login"));
 elements.soundButton.addEventListener("click", () => toggleSound());
 elements.saveButton.addEventListener("click", () => syncToServer());
-elements.mineButton.addEventListener("click", () => mine());
-elements.mineButtonMobile.addEventListener("click", () => mine());
+elements.mineButton.addEventListener("click", () => mine(elements.mineButton));
+elements.mineButtonMobile.addEventListener("click", () => mine(elements.mineButtonMobile));
 elements.fightButton.addEventListener("click", () => {
-  attackBoss(false);
+  attackBoss(false, elements.fightButton);
   render();
 });
 elements.fightButtonMobile.addEventListener("click", () => {
-  attackBoss(false);
+  attackBoss(false, elements.fightButtonMobile);
   render();
 });
-elements.bossButton.addEventListener("click", () => {
-  const gameState = getGameState();
-  if (!gameState) {
-    return;
-  }
-  if (gameState.progression.depth < gameState.progression.bossFloor) {
-    elements.combatText.textContent = `${gameState.progression.bossFloor}층까지 더 내려가야 보스를 만날 수 있다.`;
-    return;
-  }
-  attackBoss(false);
-  render();
-});
-elements.bossButtonMobile.addEventListener("click", () => {
-  const gameState = getGameState();
-  if (!gameState) {
-    return;
-  }
-  if (gameState.progression.depth < gameState.progression.bossFloor) {
-    elements.combatText.textContent = `${gameState.progression.bossFloor}층까지 더 내려가야 보스를 만날 수 있다.`;
-    return;
-  }
-  attackBoss(false);
-  render();
-});
+elements.bossButton.addEventListener("click", () => attemptBoss(elements.bossButton));
+elements.bossButtonMobile.addEventListener("click", () => attemptBoss(elements.bossButtonMobile));
 
 setInterval(() => {
   if (!state.profile) {

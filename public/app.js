@@ -29,21 +29,21 @@ const TICK_MS = 1000;
 const SAVE_INTERVAL_MS = 10000;
 
 const upgrades = [
-  { id: "drill", title: "다이아 드릴", costBase: 25, growth: 1.6, description: "클릭 채굴량과 전투력이 함께 오른다." },
-  { id: "crew", title: "광부 분대", costBase: 45, growth: 1.7, description: "초당 채굴량이 크게 오른다." },
-  { id: "forge", title: "심연 제련로", costBase: 70, growth: 1.8, description: "전투력이 더 빠르게 증가한다." },
-  { id: "scanner", title: "균열 스캐너", costBase: 90, growth: 1.95, description: "결정과 보스 효율이 상승한다." },
+  { id: "drill", title: "다이아 드릴", costBase: 25, growth: 1.6, description: "클릭 채굴량과 전투력이 함께 증가한다." },
+  { id: "crew", title: "광부 분대", costBase: 45, growth: 1.7, description: "초당 자동 채굴량이 크게 상승한다." },
+  { id: "forge", title: "심연 제련로", costBase: 70, growth: 1.8, description: "전투력 성장 속도를 빠르게 끌어올린다." },
+  { id: "scanner", title: "균열 스캐너", costBase: 90, growth: 1.95, description: "결정 발견과 보스 보상 효율을 높인다." },
 ];
 
 const labUpgrades = [
-  { id: "overclock", title: "오버클럭", costBase: 150, growth: 2, description: "전투력 영구 배율 상승." },
-  { id: "logistics", title: "물류 증폭", costBase: 180, growth: 2.05, description: "자동 채굴량 영구 배율 상승." },
-  { id: "luck", title: "희귀 탐사학", costBase: 220, growth: 2.15, description: "결정과 보스 보상이 상승한다." },
+  { id: "overclock", title: "오버클럭", costBase: 150, growth: 2, description: "전투력의 영구 배율이 상승한다." },
+  { id: "logistics", title: "물류 증폭", costBase: 180, growth: 2.05, description: "자동 채굴량의 영구 배율이 상승한다." },
+  { id: "luck", title: "희귀 탐사학", costBase: 220, growth: 2.15, description: "결정과 보스 보상이 더 자주 터진다." },
 ];
 
 const skinCatalog = [
   { id: "default", name: "Default Drill", description: "기본 외형." },
-  { id: "founder-gold", name: "Founder Gold", description: "유료 상점에서 지급되는 황금 외형." },
+  { id: "founder-gold", name: "Founder Gold", description: "향후 프리미엄 상점에서 지급될 황금 외형." },
 ];
 
 const state = {
@@ -152,9 +152,11 @@ function advanceBossState(gameState) {
   if (gameState.boss.hp > 0) {
     return;
   }
+
   const rewardGold = Math.floor(80 + gameState.progression.depth * 10);
   const rewardOre = Math.floor(50 + gameState.progression.depth * 9);
   const rewardCrystal = 1 + Math.floor(gameState.lab.luck / 2);
+
   gameState.resources.gold += rewardGold;
   gameState.resources.ore += rewardOre;
   gameState.resources.crystals += rewardCrystal;
@@ -201,10 +203,12 @@ function mine() {
   gameState.resources.ore += gain;
   gameState.resources.gold += Math.max(1, Math.floor(gain / 2));
   gameState.stats.oreMined += gain;
+
   if (Math.random() < 0.05 + gameState.upgrades.scanner * 0.01 + gameState.lab.luck * 0.02) {
     gameState.resources.crystals += 1;
     pushLog("광맥에서 결정이 튀어나왔다.");
   }
+
   updateQuestProgress(gameState);
   render();
 }
@@ -323,6 +327,7 @@ function render() {
   if (!state.profile) {
     return;
   }
+
   const gameState = getGameState();
   updateQuestProgress(gameState);
 
@@ -330,7 +335,7 @@ function render() {
   elements.usernameLabel.textContent = state.profile.username;
   elements.premiumGems.textContent = number(gameState.resources.premiumGems);
   elements.heroTitle.textContent = `심연 ${gameState.progression.depth}층`;
-  elements.heroCopy.textContent = `${gameState.cosmetics.activeSkin} 스킨 장착 중. 서버 저장과 리더보드 경쟁이 활성화되어 있다.`;
+  elements.heroCopy.textContent = `${gameState.cosmetics.activeSkin} 스킨 장착 중. 서버 저장과 랭킹 경쟁이 실시간으로 이어지고 있다.`;
   elements.offlineLabel.textContent = new Date(gameState.lastUpdatedAt).toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -382,7 +387,7 @@ function render() {
     gameState.quests.map((quest) =>
       buildCard({
         title: quest.label,
-        description: "완수 시 서버 보상이 즉시 지급된다.",
+        description: "완수하면 서버에서 즉시 보상을 지급한다.",
         meta: quest.claimed ? "수령 완료" : `${quest.progress} / ${quest.goal}`,
         buttonLabel: quest.claimed ? "완료" : quest.progress >= quest.goal ? "보상 받기" : "진행 중",
         disabled: quest.claimed || quest.progress < quest.goal,
@@ -391,6 +396,18 @@ function render() {
       }),
     ),
   );
+
+  renderList(elements.storeList, [
+    buildCard({
+      title: "프리미엄 상점 준비중",
+      description: "사업자 등록과 결제 연동이 끝나면 젬과 한정 스킨 판매가 열릴 예정이다.",
+      meta: "현재는 무료 공개 테스트 중",
+      buttonLabel: "준비중",
+      disabled: true,
+      className: "secondary-button small-button",
+      onClick: () => {},
+    }),
+  ]);
 
   renderList(
     elements.skinList,
@@ -446,24 +463,7 @@ async function fetchStore() {
     const config = await API.request("/api/config");
     state.paymentProvider = config.paymentProvider;
     state.paymentEnabled = Boolean(config.toss?.enabled);
-
-    const payload = await API.request("/api/store/catalog");
-    renderList(
-      elements.storeList,
-      payload.items.map((item) =>
-        buildCard({
-          title: item.name,
-          description: state.paymentEnabled
-            ? item.description
-            : `${item.description} 현재 프리미엄 결제는 준비중이며, 사업자 등록 이후 활성화될 예정입니다.`,
-          meta: `${number(item.price)} ${item.currency}`,
-          buttonLabel: state.paymentEnabled ? "구매" : "준비중",
-          disabled: !state.profile || !state.paymentEnabled,
-          className: "secondary-button small-button",
-          onClick: () => openCheckout(item),
-        }),
-      ),
-    );
+    render();
   } catch (error) {
     setSync("상점 오류", error.message, true);
   }
@@ -484,6 +484,7 @@ async function authenticate(mode) {
     elements.authStatus.textContent = "닉네임은 2자 이상이어야 한다.";
     return;
   }
+
   try {
     elements.authStatus.textContent = "계정 처리 중...";
     const payload = await API.request(`/api/auth/${mode}`, {
@@ -501,35 +502,6 @@ async function authenticate(mode) {
   }
 }
 
-async function openCheckout(item) {
-  try {
-    const payload = await API.request("/api/store/checkout", {
-      method: "POST",
-      body: { sku: item.sku },
-    });
-    if (typeof window.TossPayments !== "function") {
-      throw new Error("토스 SDK를 불러오지 못했습니다.");
-    }
-    const tossPayments = window.TossPayments(payload.checkout.clientKey);
-    const payment = tossPayments.payment({
-      customerKey: payload.checkout.customerKey,
-    });
-    await payment.requestPayment({
-      method: "CARD",
-      amount: {
-        currency: payload.checkout.currency,
-        value: payload.checkout.amount,
-      },
-      orderId: payload.checkout.orderId,
-      orderName: payload.checkout.orderName,
-      successUrl: payload.checkout.successUrl,
-      failUrl: payload.checkout.failUrl,
-    });
-  } catch (error) {
-    setSync("결제 준비 실패", error.message, true);
-  }
-}
-
 elements.registerButton.addEventListener("click", () => authenticate("register"));
 elements.loginButton.addEventListener("click", () => authenticate("login"));
 elements.saveButton.addEventListener("click", () => syncToServer());
@@ -544,7 +516,7 @@ elements.bossButton.addEventListener("click", () => {
     return;
   }
   if (gameState.progression.depth < gameState.progression.bossFloor) {
-    elements.combatText.textContent = `${gameState.progression.bossFloor}층까지 더 내려가야 보스를 만난다.`;
+    elements.combatText.textContent = `${gameState.progression.bossFloor}층까지 더 내려가야 보스를 만날 수 있다.`;
     return;
   }
   attackBoss(false);

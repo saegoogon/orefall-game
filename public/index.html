@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orefall Idle Online</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="aurora aurora-left"></div>
+    <div class="aurora aurora-right"></div>
+
+    <div id="auth-modal" class="overlay visible">
+      <section class="auth-card">
+        <p class="eyebrow">Orefall Online</p>
+        <h1>광산 제국에 접속</h1>
+        <p class="auth-copy">서버 저장, 랭킹, 프리미엄 상점이 붙은 온라인 버전이다.</p>
+        <div class="auth-controls">
+          <input id="username-input" class="text-input" maxlength="20" placeholder="닉네임 입력" />
+          <div class="auth-actions">
+            <button id="register-button" class="primary-button">새 계정 만들기</button>
+            <button id="login-button" class="ghost-button">기존 계정 로그인</button>
+          </div>
+        </div>
+        <p id="auth-status" class="muted-text">닉네임만 있으면 바로 시작된다.</p>
+      </section>
+    </div>
+
+    <main class="app-shell">
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">Server-Backed Idle RPG</p>
+          <h2>Orefall Idle Online</h2>
+        </div>
+        <div class="topbar-actions">
+          <div class="chip"><span>계정</span><strong id="username-label">Guest</strong></div>
+          <div class="chip premium"><span>프리미엄 젬</span><strong id="premium-gems">0</strong></div>
+          <button id="save-button" class="ghost-button small-button">서버 저장</button>
+        </div>
+      </header>
+
+      <section class="hero-grid">
+        <article class="panel hero-panel">
+          <div>
+            <p class="eyebrow">Depth Rush</p>
+            <h1 id="hero-title">심연 1층</h1>
+            <p id="hero-copy" class="hero-copy">광산 자동화 설비를 올리고 보스를 밀어 올려 서버 랭킹 1위를 노려라.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="mine-button" class="primary-button">광맥 타격</button>
+            <button id="fight-button" class="secondary-button">전투</button>
+            <button id="boss-button" class="accent-button">보스 도전</button>
+          </div>
+        </article>
+
+        <article class="panel sync-panel">
+          <div class="panel-heading">
+            <h3>서버 상태</h3>
+            <span id="sync-badge" class="badge">대기 중</span>
+          </div>
+          <p id="sync-text" class="muted-text">로그인 후 서버 동기화가 시작된다.</p>
+          <div class="mini-stats">
+            <div class="mini-card"><span>최근 저장</span><strong id="offline-label">없음</strong></div>
+            <div class="mini-card"><span>결제 공급자</span><strong id="payment-provider">mock</strong></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>자원</h3>
+            <span class="badge">실시간</span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><span>금화</span><strong id="gold-stat">0</strong></div>
+            <div class="stat-card"><span>광석</span><strong id="ore-stat">0</strong></div>
+            <div class="stat-card"><span>결정</span><strong id="crystal-stat">0</strong></div>
+            <div class="stat-card"><span>코어</span><strong id="core-stat">0</strong></div>
+            <div class="stat-card"><span>전투력</span><strong id="power-stat">0</strong></div>
+            <div class="stat-card"><span>초당 채굴</span><strong id="ore-rate-stat">0</strong></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>보스 전투</h3>
+            <span id="boss-floor-badge" class="badge">10층</span>
+          </div>
+          <p id="boss-name" class="boss-name">Crag Maw</p>
+          <div class="health-track"><div id="boss-health-fill" class="health-fill"></div></div>
+          <p id="boss-health-text" class="muted-text">0 / 0</p>
+          <p id="combat-text" class="combat-text">광산 아래쪽에서 괴성이 들린다.</p>
+        </article>
+
+        <article class="panel leaderboard-panel">
+          <div class="panel-heading">
+            <h3>서버 랭킹</h3>
+            <span class="badge">Top 10</span>
+          </div>
+          <div id="leaderboard-list" class="list"></div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>자동화 설비</h3>
+            <span class="badge">광석 소모</span>
+          </div>
+          <div id="upgrade-list" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>연구소</h3>
+            <span class="badge">금화 소모</span>
+          </div>
+          <div id="lab-list" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>미션</h3>
+            <span class="badge">보상</span>
+          </div>
+          <div id="quest-list" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>프리미엄 상점</h3>
+            <span class="badge">결제 가능 구조</span>
+          </div>
+          <div id="store-list" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <h3>드릴 스킨</h3>
+            <span class="badge">꾸미기</span>
+          </div>
+          <div id="skin-list" class="list"></div>
+        </article>
+
+        <article class="panel logs-panel">
+          <div class="panel-heading">
+            <h3>원정 로그</h3>
+            <span class="badge">최근 24개</span>
+          </div>
+          <div id="log-list" class="log-list"></div>
+        </article>
+      </section>
+    </main>
+
+    <div id="checkout-modal" class="overlay">
+      <section class="checkout-card">
+        <div class="panel-heading">
+          <h3>결제 확인</h3>
+          <button id="checkout-close" class="ghost-button small-button">닫기</button>
+        </div>
+        <p id="checkout-copy" class="muted-text">상품 정보를 불러오는 중...</p>
+        <div class="checkout-actions">
+          <button id="checkout-confirm" class="primary-button">구매 확정</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,378 @@
+:root {
+  color-scheme: dark;
+  --bg-start: #041019;
+  --bg-end: #0b2131;
+  --panel: rgba(7, 18, 29, 0.84);
+  --panel-border: rgba(156, 204, 255, 0.12);
+  --text: #eef6ff;
+  --muted: #8ea9c4;
+  --accent: #56f0c8;
+  --accent-2: #7cc8ff;
+  --warning: #ffc970;
+  --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(86, 240, 200, 0.09), transparent 28%),
+    radial-gradient(circle at top right, rgba(124, 200, 255, 0.12), transparent 32%),
+    linear-gradient(155deg, var(--bg-start), var(--bg-end));
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.aurora {
+  position: fixed;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.aurora-left {
+  top: -6rem;
+  left: -5rem;
+  background: #56f0c8;
+}
+
+.aurora-right {
+  bottom: -8rem;
+  right: -5rem;
+  background: #4a8dff;
+}
+
+.app-shell {
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.panel,
+.auth-card,
+.checkout-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+}
+
+.topbar,
+.hero-panel,
+.sync-panel,
+.content-grid .panel,
+.dashboard-grid .panel {
+  padding: 24px;
+}
+
+.topbar,
+.hero-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.topbar-actions,
+.hero-actions,
+.auth-actions,
+.checkout-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 4.5vw, 4rem);
+}
+
+.hero-grid,
+.dashboard-grid,
+.content-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.hero-grid {
+  grid-template-columns: 1.3fr 0.7fr;
+}
+
+.dashboard-grid {
+  grid-template-columns: 1.1fr 1fr 0.85fr;
+}
+
+.content-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.hero-copy,
+.muted-text,
+.combat-text {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.chip,
+.mini-card,
+.stat-card,
+.list-item,
+.log-entry {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chip,
+.mini-card,
+.stat-card,
+.list-item,
+.log-entry {
+  padding: 16px;
+}
+
+.chip span,
+.mini-card span,
+.stat-card span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.premium strong {
+  color: var(--warning);
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(124, 200, 255, 0.12);
+  border: 1px solid rgba(124, 200, 255, 0.18);
+  color: #d2e9ff;
+  font-size: 0.8rem;
+}
+
+.mini-stats,
+.stats-grid,
+.list,
+.log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.mini-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.boss-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.health-track {
+  height: 14px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.health-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ff8d76, #ffd36d);
+  transition: width 160ms ease;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.item-meta {
+  color: #d7ebff;
+  font-size: 0.86rem;
+}
+
+.log-entry strong {
+  color: var(--text);
+}
+
+.text-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 13px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #1fe0b1, #56f0c8);
+  color: #072016;
+}
+
+.secondary-button {
+  background: linear-gradient(135deg, #ffc970, #ff9c66);
+  color: #301a05;
+}
+
+.accent-button {
+  background: linear-gradient(135deg, #73bcff, #9fd2ff);
+  color: #091f36;
+}
+
+.ghost-button {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.small-button {
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(1, 6, 10, 0.68);
+  z-index: 30;
+  padding: 18px;
+}
+
+.overlay.visible {
+  display: grid;
+}
+
+.auth-card,
+.checkout-card {
+  width: min(520px, 100%);
+  padding: 28px;
+}
+
+.auth-controls {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.leaderboard-panel .list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 1100px) {
+  .hero-grid,
+  .dashboard-grid,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar,
+  .hero-panel {
+    flex-direction: column;
+    align-items: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: min(100% - 20px, 1280px);
+    padding-top: 16px;
+  }
+
+  .topbar,
+  .hero-panel,
+  .sync-panel,
+  .content-grid .panel,
+  .dashboard-grid .panel {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .stats-grid,
+  .mini-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar-actions,
+  .hero-actions,
+  .auth-actions,
+  .checkout-actions,
+  button,
+  .text-input {
+    width: 100%;
+  }
+
+  .item-row {
+    flex-direction: column;
+    align-items: start;
+  }
+}

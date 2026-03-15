@@ -1,5 +1,5 @@
 {
-  "name": "neon-duel-arena",
+  "name": "gung",
   "version": "1.0.0",
   "private": true,
   "description": "Realtime online 1v1 browser shooter with WebSocket matchmaking.",

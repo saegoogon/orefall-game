@@ -20,7 +20,7 @@ const elements = {
 };
 
 const state = {
-  appName: "Neon Duel Arena",
+  appName: "gung",
   adsenseClient: "",
   socket: null,
   connected: false,

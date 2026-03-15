@@ -1,47 +1,24 @@
-# Orefall Idle Online
+# Polar Pick
 
-서버 저장, 리더보드, 추후 결제 확장 구조가 붙은 브라우저 방치형 광산 RPG입니다.
+간단한 로그인, 질문 작성, 실시간 투표 결과, 댓글 기능이 들어간 밸런스 게임 웹사이트입니다.
+
+## 기능
+
+- 닉네임 기반 입장
+- 밸런스 게임 질문 작성
+- 최신순 / 인기순 질문 피드
+- 질문별 투표와 실시간 퍼센트 표시
+- 한 줄 댓글
+- 인기 작성자와 대표 질문 표시
 
 ## 실행
 
-1. 터미널에서 `C:\Users\User\Downloads\orefall-idle` 로 이동
-2. `npm start`
-3. 브라우저에서 `http://localhost:3000`
+```bash
+npm start
+```
 
-## Render 배포
+기본 주소는 `http://localhost:3000` 입니다.
 
-1. Render에서 새 Blueprint 또는 Web Service 생성
-2. 이 폴더를 Git 저장소로 올린 뒤 [render.yaml](C:\Users\User\Downloads\orefall-idle\render.yaml) 사용
-3. Render 환경변수에 `TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY` 입력
-4. 배포 후 토스 개발자센터에 성공/실패 URL 도메인을 맞춰 등록
+## 데이터 저장
 
-## 포함 기능
-
-- 닉네임 기반 계정 생성과 로그인
-- 서버 저장과 자동 동기화
-- 리더보드
-- 업그레이드, 연구소, 퀘스트, 보스 루프
-- 프리미엄 젬과 스킨 상점 UI
-- 토스페이먼츠 연동 준비 구조
-
-## 결제 설정
-
-1. 사업자 등록 후 토스페이먼츠 이용 신청
-2. `.env.example`을 참고해서 프로젝트 루트에 `.env` 파일 생성
-3. `TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY` 입력
-4. 그 전까지는 결제 없이 공개 가능
-
-## 결제 엔드포인트
-
-- 결제 준비: `/api/store/checkout`
-- 결제 승인: `/api/store/toss/confirm`
-- 성공 페이지: `/payments/success`
-- 실패 페이지: `/payments/fail`
-
-## 보안 메모
-
-- 세션은 `HttpOnly` 쿠키로 관리
-- 상태 변경 API는 `CSRF` 헤더 검증
-- 프리미엄 젬과 스킨은 서버 기준으로만 반영
-- 보안 헤더와 `CSP` 적용
-- Render 헬스체크용 `/healthz` 제공
+질문, 사용자, 세션 데이터는 `data/db.json`에 저장됩니다.

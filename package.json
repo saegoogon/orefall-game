@@ -1,8 +1,8 @@
 {
-  "name": "orefall-idle",
+  "name": "polar-pick",
   "version": "1.0.0",
   "private": true,
-  "description": "Server-backed browser idle mining RPG with mock payments and leaderboard.",
+  "description": "Server-backed balance game and voting community site.",
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js && node --check public/app.js"

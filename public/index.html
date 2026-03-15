@@ -1,287 +1,169 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blackforge Market</title>
+    <title>Polar Pick | 밸런스 게임</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
-    <div id="impact-layer" class="impact-layer" aria-hidden="true"></div>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
 
     <div id="auth-modal" class="overlay visible">
       <section class="auth-card">
-        <div class="terminal-tag">SECURE NODE / INVITE ONLY</div>
-        <h1>BLACKFORGE MARKET</h1>
+        <p class="eyebrow">POLAR PICK</p>
+        <h1>둘 중 하나, 지금 바로 골라봐</h1>
         <p class="auth-copy">
-          A hidden forge board where broken weapons become profit. Enhance risky gear, strip dead dragons, and climb the private ranking feed.
+          질문 올리고, 투표하고, 댓글로 반응을 남기는 밸런스 게임 사이트예요.
         </p>
-        <div class="auth-console">
-          <div class="console-row"><span>STATUS</span><strong>HIDDEN NETWORK LIVE</strong></div>
-          <div class="console-row"><span>FEED</span><strong>UPGRADE THREAD OPEN</strong></div>
-          <div class="console-row"><span>RISK</span><strong>HIGH / PROFIT MAX</strong></div>
+        <div class="auth-points">
+          <div><strong>실시간 퍼센트</strong><span>선택 즉시 결과 반영</span></div>
+          <div><strong>질문 작성</strong><span>연애, 학교, 음식, 일상 전부 가능</span></div>
+          <div><strong>한줄 댓글</strong><span>왜 골랐는지 가볍게 남기기</span></div>
         </div>
         <div class="auth-controls">
-          <input id="username-input" class="text-input" maxlength="20" placeholder="Enter handle" />
+          <input id="username-input" class="text-input" maxlength="20" placeholder="닉네임 입력" />
           <div class="auth-actions">
-            <button id="register-button" class="primary-button">Create Handle</button>
-            <button id="login-button" class="ghost-button">Login</button>
+            <button id="register-button" class="primary-button">처음 시작</button>
+            <button id="login-button" class="ghost-button">기존 닉네임 로그인</button>
           </div>
         </div>
-        <p id="auth-status" class="muted-text">Drop a handle and enter the board instantly.</p>
+        <p id="auth-status" class="muted-text">2글자 이상 닉네임으로 바로 입장할 수 있어요.</p>
       </section>
     </div>
 
     <main class="app-shell">
-      <header class="topbar panel">
-        <div class="brand-lockup">
-          <div class="brand-mark">BF</div>
-          <div>
-            <p class="eyebrow">Black Market Enhancement Board</p>
-            <h2>Blackforge Market</h2>
-          </div>
+      <header class="topbar">
+        <div class="brand-block">
+          <p class="eyebrow">SOCIAL BALANCE GAME</p>
+          <h2>Polar Pick</h2>
         </div>
         <div class="topbar-actions">
-          <div class="chip">
-            <span>HANDLE</span>
+          <div class="top-chip">
+            <span>닉네임</span>
             <strong id="username-label">Guest</strong>
           </div>
-          <div class="chip premium">
-            <span>BLACK GEMS</span>
-            <strong id="premium-gems">0</strong>
+          <div class="top-chip">
+            <span>내 질문</span>
+            <strong id="created-count">0</strong>
           </div>
-          <button id="sound-button" class="ghost-button small-button">AUDIO ON</button>
-          <button id="save-button" class="ghost-button small-button">SYNC</button>
+          <div class="top-chip accent-chip">
+            <span>내 투표</span>
+            <strong id="voted-count">0</strong>
+          </div>
+          <button id="refresh-button" class="ghost-button small-button">새로고침</button>
+          <button id="logout-button" class="ghost-button small-button">로그아웃</button>
         </div>
       </header>
 
       <section class="hero-grid">
-        <article class="panel hero-panel">
-          <div class="hero-copy-block">
-            <p class="eyebrow">Thread 01 / Forbidden Forge</p>
-            <h1 id="hero-title">Forge Rank 1</h1>
-            <p id="hero-copy" class="hero-copy">
-              Feed cursed scrap into the blade and force another illegal enhancement. Every rank raises value, risk, and the chance the market notices.
+        <article class="hero-card">
+          <div class="hero-copy">
+            <p class="eyebrow">TODAY'S FEATURED PICK</p>
+            <h3 id="featured-question">오늘 가장 뜨거운 밸런스 게임</h3>
+            <p id="featured-description" class="muted-text">
+              투표가 몰린 질문을 자동으로 보여줘요. 로그인하고 바로 참여해보세요.
             </p>
-            <div class="hero-actions">
-              <button id="mine-button" class="primary-button">Random Enhance</button>
-              <button id="fight-button" class="secondary-button">Strip Target</button>
-              <button id="boss-button" class="accent-button">Trace Dragon</button>
+            <div class="hero-stats">
+              <div class="metric-card">
+                <span>총 질문</span>
+                <strong id="metric-polls">0</strong>
+              </div>
+              <div class="metric-card">
+                <span>총 투표</span>
+                <strong id="metric-votes">0</strong>
+              </div>
+              <div class="metric-card">
+                <span>총 댓글</span>
+                <strong id="metric-comments">0</strong>
+              </div>
             </div>
+            <button id="jump-featured-button" class="primary-button">대표 질문 보러가기</button>
           </div>
-
-          <div class="hero-stage">
-            <div class="stage-grid"></div>
-            <div class="weapon-card">
-              <div class="weapon-card__glow"></div>
-              <div id="weapon-rarity" class="weapon-card__tier">COMMON</div>
-              <div id="weapon-name" class="weapon-card__name">VOID EDGE // +0</div>
-              <div class="weapon-card__frame">
-                <div class="blade blade-main"></div>
-                <div class="blade blade-core"></div>
-                <div class="blade blade-hilt"></div>
-              </div>
-              <div class="weapon-card__stats">
-                <span id="weapon-chance">RATE 92%</span>
-                <span id="weapon-heat">HEAT LOW</span>
-              </div>
-              <div id="weapon-options" class="weapon-option-list">
-                <span class="weapon-option">+2 forge damage</span>
-                <span class="weapon-option">+1.2 scrap pulse</span>
-              </div>
-            </div>
-            <div class="terminal-panel terminal-left">
-              <div class="terminal-line">[UPGRADE LOG] seed injection complete</div>
-              <div class="terminal-line">[DROP TABLE] cursed shard acquired</div>
-              <div class="terminal-line">[NOTICE] market watchers detected</div>
-            </div>
-            <div class="dragon-panel">
-              <svg class="dragon-art" viewBox="0 0 360 320" fill="none" aria-hidden="true">
-                <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#stageWingBack)"/>
-                <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
-                <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
-                <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#stageBodyMain)"/>
-                <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
-                <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
-                <path d="M91 182L66 138L103 151L91 182Z" fill="#CF9D73"/>
-                <path d="M272 181L295 137L258 151L272 181Z" fill="#CF9D73"/>
-                <path d="M128 242C149 260 214 260 236 242" stroke="#FFEEE1" stroke-width="8" stroke-linecap="round"/>
-                <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
-                <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
-                <circle cx="181" cy="214" r="28" fill="url(#stageCoreGlow)"/>
-                <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
-                <defs>
-                  <linearGradient id="stageWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#3B475C"/>
-                    <stop offset="1" stop-color="#111827"/>
-                  </linearGradient>
-                  <linearGradient id="stageBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#475569"/>
-                    <stop offset="1" stop-color="#0F172A"/>
-                  </linearGradient>
-                  <radialGradient id="stageCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
-                    <stop stop-color="#FFD166"/>
-                    <stop offset="0.55" stop-color="#FF8A65"/>
-                    <stop offset="1" stop-color="#E11D48"/>
-                  </radialGradient>
-                </defs>
-              </svg>
-            </div>
+          <div class="hero-preview">
+            <div class="preview-label">LIVE SPLIT</div>
+            <div id="featured-options" class="preview-options"></div>
           </div>
         </article>
 
-        <article class="panel sync-panel">
-          <div class="panel-heading">
-            <h3>NODE STATUS</h3>
-            <span id="sync-badge" class="badge">IDLE</span>
+        <article class="side-card">
+          <div class="panel-head">
+            <h3>인기 작성자</h3>
+            <span class="pill">TOP 5</span>
           </div>
-          <p id="sync-text" class="muted-text">Server thread is stable and waiting for the next sync.</p>
-          <div class="mini-stats">
-            <div class="mini-card">
-              <span>LAST SYNC</span>
-              <strong id="offline-label">NONE</strong>
-            </div>
-            <div class="mini-card">
-              <span>PAYMENT</span>
-              <strong id="payment-provider">coming soon</strong>
-            </div>
-          </div>
-          <div class="status-banner">
-            <strong>BLACK MARKET NOTICE</strong>
-            <p>Premium trade is still locked. The live build is open for free board testing while payments stay offline.</p>
-          </div>
+          <div id="creator-list" class="stack-list"></div>
         </article>
       </section>
 
-      <section class="dashboard-grid">
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>RESOURCE CACHE</h3>
-            <span class="badge">LIVE</span>
+      <section class="board-grid">
+        <article class="composer-card">
+          <div class="panel-head">
+            <h3>질문 올리기</h3>
+            <span class="pill">NEW PICK</span>
           </div>
-          <div class="stats-grid">
-            <div class="stat-card stat-gold"><span>CREDITS</span><strong id="gold-stat">0</strong></div>
-            <div class="stat-card stat-ore"><span>SCRAP</span><strong id="ore-stat">0</strong></div>
-            <div class="stat-card stat-crystal"><span>CURSED SHARDS</span><strong id="crystal-stat">0</strong></div>
-            <div class="stat-card stat-core"><span>VOID CORES</span><strong id="core-stat">0</strong></div>
-            <div class="stat-card stat-power"><span>FORGE POWER</span><strong id="power-stat">0</strong></div>
-            <div class="stat-card stat-rate"><span>PASSIVE RATE</span><strong id="ore-rate-stat">0</strong></div>
-          </div>
+          <form id="composer-form" class="composer-form">
+            <input id="question-input" class="text-input" maxlength="120" placeholder="예: 평생 여름만 살기 vs 평생 겨울만 살기" />
+            <textarea id="description-input" class="text-input text-area" maxlength="220" placeholder="짧은 설명이나 분위기를 적어보세요 (선택)"></textarea>
+            <div class="split-fields">
+              <input id="option-a-input" class="text-input" maxlength="40" placeholder="선택지 A" />
+              <input id="option-b-input" class="text-input" maxlength="40" placeholder="선택지 B" />
+            </div>
+            <div class="split-fields action-row">
+              <select id="category-input" class="select-input">
+                <option>일상</option>
+                <option>연애</option>
+                <option>음식</option>
+                <option>학교</option>
+                <option>직장</option>
+                <option>기타</option>
+              </select>
+              <button type="submit" class="primary-button">질문 등록</button>
+            </div>
+          </form>
+          <p id="composer-status" class="muted-text">재미있는 질문일수록 반응이 빨라져요.</p>
         </article>
 
-        <article class="panel boss-panel">
-          <div class="panel-heading">
-            <h3>DRAGON TRACE</h3>
-            <span id="boss-floor-badge" class="badge">10TH NODE</span>
-          </div>
-          <div class="boss-card">
-            <svg class="boss-illustration" viewBox="0 0 360 320" fill="none" aria-hidden="true">
-              <path d="M85 258C48 226 42 158 73 115C105 70 170 52 223 67C273 81 317 122 319 177C321 236 276 283 212 287L132 289L85 258Z" fill="url(#panelWingBack)"/>
-              <path d="M266 154C302 138 326 145 343 171C322 172 303 178 282 195L266 154Z" fill="#1E293B"/>
-              <path d="M97 149C60 137 33 147 18 175C39 175 60 182 82 199L97 149Z" fill="#1E293B"/>
-              <path d="M101 261C72 232 70 178 92 138C120 87 179 68 228 83C272 97 306 136 306 184C306 242 262 282 205 282H140L101 261Z" fill="url(#panelBodyMain)"/>
-              <path d="M133 105L102 34L154 71L133 105Z" fill="#FFD7A1"/>
-              <path d="M245 109L273 33L222 70L245 109Z" fill="#FFD7A1"/>
-              <ellipse cx="134" cy="162" rx="17" ry="15" fill="#FFD166"/>
-              <ellipse cx="229" cy="162" rx="17" ry="15" fill="#FFD166"/>
-              <circle cx="181" cy="214" r="28" fill="url(#panelCoreGlow)"/>
-              <circle cx="181" cy="214" r="52" fill="#FF7A59" fill-opacity="0.18"/>
-              <defs>
-                <linearGradient id="panelWingBack" x1="181" y1="60" x2="181" y2="289" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#3B475C"/>
-                  <stop offset="1" stop-color="#111827"/>
-                </linearGradient>
-                <linearGradient id="panelBodyMain" x1="188" y1="82" x2="188" y2="282" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#475569"/>
-                  <stop offset="1" stop-color="#0F172A"/>
-                </linearGradient>
-                <radialGradient id="panelCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(181 214) rotate(90) scale(28)">
-                  <stop stop-color="#FFD166"/>
-                  <stop offset="0.55" stop-color="#FF8A65"/>
-                  <stop offset="1" stop-color="#E11D48"/>
-                </radialGradient>
-              </defs>
-            </svg>
-            <div class="boss-info">
-              <p id="boss-name" class="boss-name">CRAG MAW</p>
-              <div class="health-track">
-                <div id="boss-health-fill" class="health-fill"></div>
-              </div>
-              <p id="boss-health-text" class="muted-text">0 / 0</p>
-              <p id="combat-text" class="combat-text">Signal noise says a dragon-class target is nearby.</p>
+        <article class="feed-card">
+          <div class="panel-head filter-head">
+            <h3>질문 피드</h3>
+            <div class="filter-row">
+              <button data-sort="latest" class="filter-button active">최신순</button>
+              <button data-sort="trending" class="filter-button">인기순</button>
             </div>
           </div>
+          <div id="category-filters" class="category-row"></div>
+          <div id="poll-list" class="poll-list"></div>
         </article>
 
-        <article class="panel leaderboard-panel">
-          <div class="panel-heading">
-            <h3>TOP HANDLES</h3>
-            <span class="badge">TOP 10</span>
+        <article class="detail-card">
+          <div class="panel-head">
+            <h3>질문 상세</h3>
+            <span id="detail-category" class="pill">-</span>
           </div>
-          <div id="leaderboard-list" class="list"></div>
-        </article>
-      </section>
-
-      <section class="content-grid">
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>FORGE STACK</h3>
-            <span class="badge">SCRAP COST</span>
+          <div id="detail-empty" class="detail-empty">
+            왼쪽에서 질문을 고르면 여기서 투표 결과와 댓글을 볼 수 있어요.
           </div>
-          <div id="upgrade-list" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>LAB PATCHES</h3>
-            <span class="badge">CREDIT COST</span>
+          <div id="detail-view" class="detail-view hidden">
+            <p id="detail-meta" class="eyebrow"></p>
+            <h3 id="detail-question" class="detail-question"></h3>
+            <p id="detail-description" class="muted-text"></p>
+            <div id="vote-options" class="vote-options"></div>
+            <div class="detail-footer">
+              <strong id="detail-total-votes">0 votes</strong>
+              <span id="detail-user-vote" class="muted-text"></span>
+            </div>
+            <form id="comment-form" class="comment-form">
+              <input id="comment-input" class="text-input" maxlength="160" placeholder="왜 그렇게 골랐는지 한 줄 남겨보세요" />
+              <button type="submit" class="accent-button">댓글 남기기</button>
+            </form>
+            <p id="comment-status" class="muted-text"></p>
+            <div id="comment-list" class="comment-list"></div>
           </div>
-          <div id="lab-list" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>FORUM MISSIONS</h3>
-            <span class="badge">REWARDS</span>
-          </div>
-          <div id="quest-list" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>PREMIUM THREAD</h3>
-            <span class="badge">LOCKED</span>
-          </div>
-          <div id="store-list" class="list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-heading">
-            <h3>SKIN VAULT</h3>
-            <span class="badge">LOADOUT</span>
-          </div>
-          <div id="skin-list" class="list"></div>
-        </article>
-
-        <article class="panel logs-panel">
-          <div class="panel-heading">
-            <h3>LIVE THREAD LOG</h3>
-            <span class="badge">24 ENTRIES</span>
-          </div>
-          <div id="log-list" class="log-list"></div>
         </article>
       </section>
     </main>
 
-    <div class="mobile-action-bar">
-      <button id="mine-button-mobile" class="primary-button">Enhance</button>
-      <button id="fight-button-mobile" class="secondary-button">Strip</button>
-      <button id="boss-button-mobile" class="accent-button">Dragon</button>
-    </div>
-
-    <script src="https://js.tosspayments.com/v2/standard"></script>
     <script src="/app.js"></script>
   </body>
 </html>

@@ -5,10 +5,11 @@ const crypto = require("node:crypto");
 const { URL } = require("node:url");
 
 const PORT = Number(process.env.PORT || 3000);
+const APP_NAME = process.env.APP_NAME || "Neon Duel Arena";
+const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT || "";
+
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
-const DATA_DIR = path.join(ROOT, "data");
-const DB_PATH = path.join(DATA_DIR, "db.json");
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -18,55 +19,26 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
-const MAX_POLLS = 100;
-const MAX_COMMENTS_PER_POLL = 80;
+const ARENA = {
+  width: 1600,
+  height: 900,
+  playerRadius: 26,
+  bulletRadius: 7,
+  playerSpeed: 380,
+  bulletSpeed: 980,
+  fireCooldownMs: 180,
+  damagePerShot: 34,
+  roundResetMs: 1600,
+  matchResetMs: 4200,
+  targetScore: 5,
+};
+
+const clients = new Map();
+const rooms = new Map();
+let waitingPlayerId = null;
 
 function uid(prefix) {
   return `${prefix}_${crypto.randomBytes(8).toString("hex")}`;
-}
-
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function hashToken(token) {
-  return crypto.createHash("sha256").update(token).digest("hex");
-}
-
-function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => {
-      data += chunk;
-      if (data.length > 1_000_000) {
-        reject(new Error("Payload too large"));
-      }
-    });
-    req.on("end", () => {
-      if (!data) {
-        resolve({});
-        return;
-      }
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        reject(new Error("Invalid JSON"));
-      }
-    });
-    req.on("error", reject);
-  });
-}
-
-function parseCookies(req) {
-  const cookieHeader = req.headers.cookie || "";
-  return cookieHeader.split(";").reduce((acc, pair) => {
-    const [rawKey, ...rest] = pair.trim().split("=");
-    if (!rawKey) {
-      return acc;
-    }
-    acc[rawKey] = decodeURIComponent(rest.join("="));
-    return acc;
-  }, {});
 }
 
 function securityHeaders() {
@@ -77,10 +49,11 @@ function securityHeaders() {
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": [
       "default-src 'self'",
-      "script-src 'self'",
+      "script-src 'self' https://pagead2.googlesyndication.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data:",
-      "connect-src 'self'",
+      "img-src 'self' data: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
+      "connect-src 'self' ws: wss: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
+      "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
       "base-uri 'self'",
       "form-action 'self'",
       "object-src 'none'",
@@ -116,481 +89,448 @@ function normalizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function createPoll({ authorId, authorName, question, optionA, optionB, category, description = "" }) {
-  const createdAt = nowIso();
-  return {
-    id: uid("poll"),
-    question,
-    description,
-    category,
-    createdAt,
-    updatedAt: createdAt,
-    authorId,
-    authorName,
-    options: [
-      { id: "A", text: optionA, votes: 0 },
-      { id: "B", text: optionB, votes: 0 },
-    ],
-    comments: [],
-    voters: [],
+function createPlayer(socket) {
+  const id = uid("player");
+  const player = {
+    id,
+    socket,
+    name: `Player-${id.slice(-4)}`,
+    roomId: null,
+    color: "#ff5a7a",
+    x: 0,
+    y: 0,
+    aimX: 0,
+    aimY: 0,
+    hp: 100,
+    alive: false,
+    input: { up: false, down: false, left: false, right: false, shoot: false },
+    lastShotAt: 0,
+    score: 0,
+    kills: 0,
+    deaths: 0,
   };
+  clients.set(id, player);
+  return player;
 }
 
-function seedPolls() {
-  return [
-    createPoll({
-      authorId: "seed",
-      authorName: "BalanceBot",
-      category: "일상",
-      question: "평생 배달음식 금지 vs 평생 카페 금지",
-      description: "사소한 것 같지만 삶의 만족도를 크게 흔드는 선택.",
-      optionA: "배달음식 금지",
-      optionB: "카페 금지",
-    }),
-    createPoll({
-      authorId: "seed",
-      authorName: "BalanceBot",
-      category: "연애",
-      question: "애인이 연락은 느리지만 다정함 vs 연락은 빠르지만 무뚝뚝함",
-      description: "연애에서 더 중요한 기준은 뭘까요?",
-      optionA: "느리지만 다정함",
-      optionB: "빠르지만 무뚝뚝함",
-    }),
-    createPoll({
-      authorId: "seed",
-      authorName: "BalanceBot",
-      category: "학교",
-      question: "시험 범위 2배 vs 과제 양 2배",
-      description: "학생이라면 누구나 고민할 질문.",
-      optionA: "시험 범위 2배",
-      optionB: "과제 양 2배",
-    }),
-    createPoll({
-      authorId: "seed",
-      authorName: "BalanceBot",
-      category: "음식",
-      question: "치킨만 먹기 vs 피자만 먹기",
-      description: "가볍지만 절대 가볍지 않은 영원한 논쟁.",
-      optionA: "치킨만 먹기",
-      optionB: "피자만 먹기",
-    }),
-  ].map((poll, index) => {
-    poll.createdAt = new Date(Date.now() - (index + 1) * 1000 * 60 * 23).toISOString();
-    poll.updatedAt = poll.createdAt;
-    return poll;
+function createRoom(firstPlayer, secondPlayer) {
+  const room = {
+    id: uid("room"),
+    players: [firstPlayer.id, secondPlayer.id],
+    bullets: [],
+    status: "countdown",
+    round: 1,
+    winnerId: null,
+    statusText: "Round start",
+    resetAt: Date.now() + 1200,
+  };
+  firstPlayer.roomId = room.id;
+  secondPlayer.roomId = room.id;
+  firstPlayer.color = "#ff6b81";
+  secondPlayer.color = "#59d8ff";
+  rooms.set(room.id, room);
+  respawnPlayers(room);
+  room.status = "live";
+  room.statusText = "Fight";
+  broadcastRoomState(room);
+  return room;
+}
+
+function playerSpawn(index) {
+  return index === 0
+    ? { x: 220, y: ARENA.height / 2 }
+    : { x: ARENA.width - 220, y: ARENA.height / 2 };
+}
+
+function respawnPlayers(room) {
+  room.players.forEach((playerId, index) => {
+    const player = clients.get(playerId);
+    if (!player) {
+      return;
+    }
+    const spawn = playerSpawn(index);
+    player.x = spawn.x;
+    player.y = spawn.y;
+    player.aimX = index === 0 ? ARENA.width : 0;
+    player.aimY = ARENA.height / 2;
+    player.hp = 100;
+    player.alive = true;
+    player.input.shoot = false;
   });
 }
 
-function emptyDb() {
+function broadcast(playerIds, message) {
+  playerIds.forEach((playerId) => {
+    const player = clients.get(playerId);
+    if (player) {
+      sendWs(player.socket, message);
+    }
+  });
+}
+
+function roomStateFor(room, selfId) {
   return {
-    users: [],
-    sessions: [],
-    polls: seedPolls(),
-  };
-}
-
-function ensureDataFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(emptyDb(), null, 2));
-    return;
-  }
-  try {
-    const db = JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
-    const nextDb = {
-      users: Array.isArray(db.users) ? db.users : [],
-      sessions: Array.isArray(db.sessions) ? db.sessions : [],
-      polls: Array.isArray(db.polls) && db.polls.length ? db.polls : seedPolls(),
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(nextDb, null, 2));
-  } catch {
-    fs.writeFileSync(DB_PATH, JSON.stringify(emptyDb(), null, 2));
-  }
-}
-
-function readDb() {
-  ensureDataFile();
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
-}
-
-function writeDb(db) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-}
-
-function createSession(userId) {
-  const rawToken = uid("sess");
-  return {
-    rawToken,
-    record: {
-      tokenHash: hashToken(rawToken),
-      csrfToken: uid("csrf"),
-      userId,
-      createdAt: nowIso(),
+    type: "state",
+    appName: APP_NAME,
+    selfId,
+    arena: {
+      width: ARENA.width,
+      height: ARENA.height,
+      targetScore: ARENA.targetScore,
     },
-  };
-}
-
-function sessionCookieHeaders(rawToken, csrfToken) {
-  return [
-    `balance_session=${encodeURIComponent(rawToken)}; Path=/; HttpOnly; SameSite=Lax`,
-    `balance_csrf=${encodeURIComponent(csrfToken)}; Path=/; SameSite=Lax`,
-  ];
-}
-
-function clearSessionHeaders() {
-  return [
-    "balance_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
-    "balance_csrf=; Path=/; Max-Age=0; SameSite=Lax",
-  ];
-}
-
-function getSession(req, db) {
-  const cookies = parseCookies(req);
-  const rawToken = cookies.balance_session || "";
-  if (!rawToken) {
-    return null;
-  }
-  const session = db.sessions.find((entry) => entry.tokenHash === hashToken(rawToken));
-  if (!session) {
-    return null;
-  }
-  const user = db.users.find((entry) => entry.id === session.userId);
-  if (!user) {
-    return null;
-  }
-  return { session, user };
-}
-
-function requireCsrf(req, session) {
-  if (req.method === "GET" || req.method === "HEAD") {
-    return true;
-  }
-  return req.headers["x-csrf-token"] === session.csrfToken;
-}
-
-function totalVotes(poll) {
-  return poll.options.reduce((sum, option) => sum + Number(option.votes || 0), 0);
-}
-
-function profileFromUser(user, db) {
-  const createdCount = db.polls.filter((poll) => poll.authorId === user.id).length;
-  const participatedCount = db.polls.filter((poll) => poll.voters.some((voter) => voter.userId === user.id)).length;
-  return {
-    id: user.id,
-    username: user.username,
-    createdAt: user.createdAt,
-    stats: {
-      createdCount,
-      participatedCount,
+    room: {
+      id: room.id,
+      round: room.round,
+      status: room.status,
+      statusText: room.statusText,
+      winnerId: room.winnerId,
+      resetAt: room.resetAt,
     },
-  };
-}
-
-function pollSummary(poll, currentUserId = null) {
-  const total = totalVotes(poll);
-  const vote = currentUserId ? poll.voters.find((entry) => entry.userId === currentUserId) : null;
-  return {
-    id: poll.id,
-    question: poll.question,
-    description: poll.description,
-    category: poll.category,
-    createdAt: poll.createdAt,
-    updatedAt: poll.updatedAt,
-    authorName: poll.authorName,
-    totalVotes: total,
-    totalComments: poll.comments.length,
-    options: poll.options.map((option) => ({
-      id: option.id,
-      text: option.text,
-      votes: option.votes,
-      percent: total ? Math.round((option.votes / total) * 100) : 0,
-    })),
-    userVote: vote ? vote.optionId : null,
-  };
-}
-
-function pollDetails(poll, currentUserId = null) {
-  return {
-    ...pollSummary(poll, currentUserId),
-    comments: poll.comments
-      .slice()
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .map((comment) => ({
-        id: comment.id,
-        authorName: comment.authorName,
-        text: comment.text,
-        createdAt: comment.createdAt,
+    players: room.players
+      .map((playerId) => clients.get(playerId))
+      .filter(Boolean)
+      .map((player) => ({
+        id: player.id,
+        name: player.name,
+        color: player.color,
+        x: player.x,
+        y: player.y,
+        hp: player.hp,
+        alive: player.alive,
+        score: player.score,
+        kills: player.kills,
+        deaths: player.deaths,
+        aimX: player.aimX,
+        aimY: player.aimY,
       })),
+    bullets: room.bullets.map((bullet) => ({
+      x: bullet.x,
+      y: bullet.y,
+      ownerId: bullet.ownerId,
+    })),
   };
 }
 
-function buildBootstrapPayload(db, user) {
-  const currentUserId = user?.id || null;
-  const latest = db.polls
-    .slice()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 12)
-    .map((poll) => pollSummary(poll, currentUserId));
-  const trending = db.polls
-    .slice()
-    .sort((a, b) => totalVotes(b) - totalVotes(a) || new Date(b.updatedAt) - new Date(a.updatedAt))
-    .slice(0, 6)
-    .map((poll) => pollSummary(poll, currentUserId));
-  const creators = db.users
-    .map((userItem) => ({
-      username: userItem.username,
-      polls: db.polls.filter((poll) => poll.authorId === userItem.id).length,
-      votesReceived: db.polls
-        .filter((poll) => poll.authorId === userItem.id)
-        .reduce((sum, poll) => sum + totalVotes(poll), 0),
-    }))
-    .filter((entry) => entry.polls > 0)
-    .sort((a, b) => b.votesReceived - a.votesReceived || b.polls - a.polls)
-    .slice(0, 5);
-  return {
-    profile: user ? profileFromUser(user, db) : null,
-    stats: {
-      pollCount: db.polls.length,
-      voteCount: db.polls.reduce((sum, poll) => sum + totalVotes(poll), 0),
-      commentCount: db.polls.reduce((sum, poll) => sum + poll.comments.length, 0),
-      userCount: db.users.length,
-    },
-    featured: trending[0] || latest[0] || null,
-    latest,
-    trending,
-    creators,
-  };
+function broadcastRoomState(room) {
+  room.players.forEach((playerId) => {
+    const player = clients.get(playerId);
+    if (player) {
+      sendWs(player.socket, roomStateFor(room, playerId));
+    }
+  });
 }
 
-async function handleApi(req, res, url) {
-  const db = readDb();
+function sendQueueState(player) {
+  sendWs(player.socket, {
+    type: "queue",
+    appName: APP_NAME,
+    adsenseClient: ADSENSE_CLIENT,
+    waiting: true,
+    message: "상대를 찾는 중입니다...",
+  });
+}
 
-  if (req.method === "GET" && url.pathname === "/api/bootstrap") {
-    const auth = getSession(req, db);
-    sendJson(res, 200, buildBootstrapPayload(db, auth?.user || null));
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/auth/register") {
-    const body = await parseBody(req);
-    const username = normalizeText(body.username, 20);
-    if (username.length < 2) {
-      sendJson(res, 400, { error: "닉네임은 2자 이상이어야 해요." });
+function queueOrMatch(player) {
+  if (waitingPlayerId && waitingPlayerId !== player.id) {
+    const opponent = clients.get(waitingPlayerId);
+    waitingPlayerId = null;
+    if (opponent && !opponent.roomId) {
+      createRoom(opponent, player);
       return;
     }
-    if (db.users.some((user) => user.username.toLowerCase() === username.toLowerCase())) {
-      sendJson(res, 409, { error: "이미 사용 중인 닉네임이에요." });
-      return;
-    }
-    const user = { id: uid("user"), username, createdAt: nowIso() };
-    const createdSession = createSession(user.id);
-    db.users.push(user);
-    db.sessions.push(createdSession.record);
-    writeDb(db);
-    sendJson(
-      res,
-      201,
-      { profile: profileFromUser(user, db), csrfToken: createdSession.record.csrfToken },
-      { "Set-Cookie": sessionCookieHeaders(createdSession.rawToken, createdSession.record.csrfToken) },
-    );
-    return;
+  }
+  waitingPlayerId = player.id;
+  sendQueueState(player);
+}
+
+function removeRoom(roomId) {
+  rooms.delete(roomId);
+}
+
+function cleanupPlayer(player) {
+  if (waitingPlayerId === player.id) {
+    waitingPlayerId = null;
   }
 
-  if (req.method === "POST" && url.pathname === "/api/auth/login") {
-    const body = await parseBody(req);
-    const username = normalizeText(body.username, 20).toLowerCase();
-    const user = db.users.find((entry) => entry.username.toLowerCase() === username);
-    if (!user) {
-      sendJson(res, 404, { error: "해당 닉네임을 찾지 못했어요." });
-      return;
-    }
-    const createdSession = createSession(user.id);
-    db.sessions.push(createdSession.record);
-    writeDb(db);
-    sendJson(
-      res,
-      200,
-      { profile: profileFromUser(user, db), csrfToken: createdSession.record.csrfToken },
-      { "Set-Cookie": sessionCookieHeaders(createdSession.rawToken, createdSession.record.csrfToken) },
-    );
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/auth/logout") {
-    const auth = getSession(req, db);
-    if (auth) {
-      db.sessions = db.sessions.filter((entry) => entry.tokenHash !== auth.session.tokenHash);
-      writeDb(db);
-    }
-    sendJson(res, 200, { ok: true }, { "Set-Cookie": clearSessionHeaders() });
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/session") {
-    const auth = getSession(req, db);
-    if (!auth) {
-      sendJson(res, 401, { error: "로그인이 필요해요." });
-      return;
-    }
-    sendJson(res, 200, { profile: profileFromUser(auth.user, db), csrfToken: auth.session.csrfToken });
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/polls") {
-    const auth = getSession(req, db);
-    const sort = url.searchParams.get("sort") || "latest";
-    const category = normalizeText(url.searchParams.get("category"), 20);
-    let polls = db.polls.slice();
-    if (category && category !== "전체") {
-      polls = polls.filter((poll) => poll.category === category);
-    }
-    polls.sort((a, b) => {
-      if (sort === "trending") {
-        return totalVotes(b) - totalVotes(a) || new Date(b.updatedAt) - new Date(a.updatedAt);
+  if (player.roomId) {
+    const room = rooms.get(player.roomId);
+    if (room) {
+      const otherId = room.players.find((id) => id !== player.id);
+      const other = clients.get(otherId);
+      if (other) {
+        other.roomId = null;
+        sendWs(other.socket, {
+          type: "queue",
+          appName: APP_NAME,
+          waiting: true,
+          message: "상대가 나갔습니다. 새 상대를 찾는 중...",
+        });
+        queueOrMatch(other);
       }
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-    sendJson(res, 200, {
-      polls: polls.slice(0, 24).map((poll) => pollSummary(poll, auth?.user?.id || null)),
-    });
-    return;
+      removeRoom(room.id);
+    }
   }
 
-  if (req.method === "POST" && url.pathname === "/api/polls") {
-    const auth = getSession(req, db);
-    if (!auth || !requireCsrf(req, auth.session)) {
-      sendJson(res, 401, { error: "질문 작성은 로그인 후 가능해요." });
-      return;
-    }
-    if (db.polls.length >= MAX_POLLS) {
-      sendJson(res, 400, { error: "질문 수가 너무 많아요. 잠시 후 다시 시도해주세요." });
-      return;
-    }
-    const body = await parseBody(req);
-    const question = normalizeText(body.question, 120);
-    const description = normalizeText(body.description, 220);
-    const optionA = normalizeText(body.optionA, 40);
-    const optionB = normalizeText(body.optionB, 40);
-    const category = normalizeText(body.category, 20) || "기타";
-    if (question.length < 6) {
-      sendJson(res, 400, { error: "질문은 조금 더 구체적으로 적어주세요." });
-      return;
-    }
-    if (!optionA || !optionB) {
-      sendJson(res, 400, { error: "선택지는 두 개 모두 입력해야 해요." });
-      return;
-    }
-    if (optionA === optionB) {
-      sendJson(res, 400, { error: "두 선택지는 서로 달라야 해요." });
-      return;
-    }
-    const poll = createPoll({
-      authorId: auth.user.id,
-      authorName: auth.user.username,
-      question,
-      description,
-      optionA,
-      optionB,
-      category,
-    });
-    db.polls.unshift(poll);
-    writeDb(db);
-    sendJson(res, 201, { poll: pollDetails(poll, auth.user.id) });
-    return;
-  }
-
-  const pollIdMatch = url.pathname.match(/^\/api\/polls\/([^/]+)$/);
-  if (req.method === "GET" && pollIdMatch) {
-    const auth = getSession(req, db);
-    const poll = db.polls.find((entry) => entry.id === pollIdMatch[1]);
-    if (!poll) {
-      sendJson(res, 404, { error: "질문을 찾지 못했어요." });
-      return;
-    }
-    sendJson(res, 200, { poll: pollDetails(poll, auth?.user?.id || null) });
-    return;
-  }
-
-  const voteMatch = url.pathname.match(/^\/api\/polls\/([^/]+)\/vote$/);
-  if (req.method === "POST" && voteMatch) {
-    const auth = getSession(req, db);
-    if (!auth || !requireCsrf(req, auth.session)) {
-      sendJson(res, 401, { error: "투표하려면 로그인해주세요." });
-      return;
-    }
-    const poll = db.polls.find((entry) => entry.id === voteMatch[1]);
-    if (!poll) {
-      sendJson(res, 404, { error: "질문을 찾지 못했어요." });
-      return;
-    }
-    if (poll.voters.some((entry) => entry.userId === auth.user.id)) {
-      sendJson(res, 409, { error: "이미 투표한 질문이에요." });
-      return;
-    }
-    const body = await parseBody(req);
-    const optionId = String(body.optionId || "");
-    const option = poll.options.find((entry) => entry.id === optionId);
-    if (!option) {
-      sendJson(res, 400, { error: "올바른 선택지가 아니에요." });
-      return;
-    }
-    option.votes += 1;
-    poll.voters.push({ userId: auth.user.id, optionId, createdAt: nowIso() });
-    poll.updatedAt = nowIso();
-    writeDb(db);
-    sendJson(res, 200, { poll: pollDetails(poll, auth.user.id) });
-    return;
-  }
-
-  const commentMatch = url.pathname.match(/^\/api\/polls\/([^/]+)\/comments$/);
-  if (req.method === "POST" && commentMatch) {
-    const auth = getSession(req, db);
-    if (!auth || !requireCsrf(req, auth.session)) {
-      sendJson(res, 401, { error: "댓글은 로그인 후 작성할 수 있어요." });
-      return;
-    }
-    const poll = db.polls.find((entry) => entry.id === commentMatch[1]);
-    if (!poll) {
-      sendJson(res, 404, { error: "질문을 찾지 못했어요." });
-      return;
-    }
-    if (poll.comments.length >= MAX_COMMENTS_PER_POLL) {
-      sendJson(res, 400, { error: "댓글이 너무 많아요. 다른 질문에서 이어가볼까요?" });
-      return;
-    }
-    const body = await parseBody(req);
-    const text = normalizeText(body.text, 160);
-    if (text.length < 2) {
-      sendJson(res, 400, { error: "댓글은 2자 이상 입력해주세요." });
-      return;
-    }
-    poll.comments.push({
-      id: uid("comment"),
-      authorId: auth.user.id,
-      authorName: auth.user.username,
-      text,
-      createdAt: nowIso(),
-    });
-    poll.updatedAt = nowIso();
-    writeDb(db);
-    sendJson(res, 201, { poll: pollDetails(poll, auth.user.id) });
-    return;
-  }
-
-  sendJson(res, 404, { error: "Unknown API route" });
+  clients.delete(player.id);
 }
 
-const server = http.createServer(async (req, res) => {
+function parseFrame(buffer) {
+  if (buffer.length < 2) {
+    return null;
+  }
+  const byte1 = buffer[0];
+  const byte2 = buffer[1];
+  const opcode = byte1 & 0x0f;
+  const masked = (byte2 & 0x80) === 0x80;
+  let offset = 2;
+  let payloadLength = byte2 & 0x7f;
+
+  if (payloadLength === 126) {
+    if (buffer.length < offset + 2) {
+      return null;
+    }
+    payloadLength = buffer.readUInt16BE(offset);
+    offset += 2;
+  } else if (payloadLength === 127) {
+    if (buffer.length < offset + 8) {
+      return null;
+    }
+    payloadLength = Number(buffer.readBigUInt64BE(offset));
+    offset += 8;
+  }
+
+  const maskLength = masked ? 4 : 0;
+  if (buffer.length < offset + maskLength + payloadLength) {
+    return null;
+  }
+
+  let payload = buffer.slice(offset + maskLength, offset + maskLength + payloadLength);
+  if (masked) {
+    const mask = buffer.slice(offset, offset + 4);
+    const unmasked = Buffer.alloc(payload.length);
+    for (let i = 0; i < payload.length; i += 1) {
+      unmasked[i] = payload[i] ^ mask[i % 4];
+    }
+    payload = unmasked;
+  }
+
+  return {
+    opcode,
+    payload,
+    consumed: offset + maskLength + payloadLength,
+  };
+}
+
+function sendRawFrame(socket, opcode, payloadBuffer) {
+  const payloadLength = payloadBuffer.length;
+  let header;
+  if (payloadLength < 126) {
+    header = Buffer.alloc(2);
+    header[1] = payloadLength;
+  } else if (payloadLength < 65536) {
+    header = Buffer.alloc(4);
+    header[1] = 126;
+    header.writeUInt16BE(payloadLength, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(payloadLength), 2);
+  }
+  header[0] = 0x80 | opcode;
+  socket.write(Buffer.concat([header, payloadBuffer]));
+}
+
+function sendWs(socket, message) {
+  if (socket.destroyed) {
+    return;
+  }
+  const payload = Buffer.from(JSON.stringify(message));
+  sendRawFrame(socket, 0x1, payload);
+}
+
+function closeWs(socket) {
+  if (!socket.destroyed) {
+    sendRawFrame(socket, 0x8, Buffer.alloc(0));
+    socket.end();
+  }
+}
+
+function handleClientMessage(player, data) {
+  const message = JSON.parse(data.toString("utf8"));
+  if (message.type === "join") {
+    player.name = normalizeText(message.name, 20) || player.name;
+    sendWs(player.socket, {
+      type: "welcome",
+      id: player.id,
+      appName: APP_NAME,
+      adsenseClient: ADSENSE_CLIENT,
+    });
+    queueOrMatch(player);
+    return;
+  }
+
+  if (message.type === "input") {
+    player.input = {
+      up: Boolean(message.input?.up),
+      down: Boolean(message.input?.down),
+      left: Boolean(message.input?.left),
+      right: Boolean(message.input?.right),
+      shoot: Boolean(message.input?.shoot),
+    };
+    player.aimX = Number.isFinite(message.aim?.x) ? message.aim.x : player.aimX;
+    player.aimY = Number.isFinite(message.aim?.y) ? message.aim.y : player.aimY;
+  }
+}
+
+function distance(aX, aY, bX, bY) {
+  const dx = aX - bX;
+  const dy = aY - bY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function startNextRound(room, reason) {
+  room.bullets = [];
+  room.round += 1;
+  room.status = "countdown";
+  room.statusText = reason;
+  room.resetAt = Date.now() + ARENA.roundResetMs;
+}
+
+function finishMatch(room, winnerId) {
+  room.bullets = [];
+  room.status = "finished";
+  room.winnerId = winnerId;
+  room.statusText = `${clients.get(winnerId)?.name || "Winner"} wins the match`;
+  room.resetAt = Date.now() + ARENA.matchResetMs;
+}
+
+function updateRoom(room, deltaSeconds, now) {
+  if (room.status === "finished" && now >= room.resetAt) {
+    room.players.forEach((playerId) => {
+      const player = clients.get(playerId);
+      if (player) {
+        player.score = 0;
+        player.kills = 0;
+        player.deaths = 0;
+      }
+    });
+    room.round = 1;
+    room.winnerId = null;
+    room.status = "live";
+    room.statusText = "Rematch";
+    respawnPlayers(room);
+  }
+
+  if (room.status === "countdown" && now >= room.resetAt) {
+    room.status = "live";
+    room.statusText = "Fight";
+    respawnPlayers(room);
+  }
+
+  if (room.status !== "live") {
+    return;
+  }
+
+  const roomPlayers = room.players.map((id) => clients.get(id)).filter(Boolean);
+  roomPlayers.forEach((player) => {
+    if (!player.alive) {
+      return;
+    }
+
+    let moveX = 0;
+    let moveY = 0;
+    if (player.input.left) moveX -= 1;
+    if (player.input.right) moveX += 1;
+    if (player.input.up) moveY -= 1;
+    if (player.input.down) moveY += 1;
+
+    if (moveX !== 0 || moveY !== 0) {
+      const length = Math.sqrt(moveX * moveX + moveY * moveY);
+      moveX /= length;
+      moveY /= length;
+      player.x = clamp(player.x + moveX * ARENA.playerSpeed * deltaSeconds, ARENA.playerRadius, ARENA.width - ARENA.playerRadius);
+      player.y = clamp(player.y + moveY * ARENA.playerSpeed * deltaSeconds, ARENA.playerRadius, ARENA.height - ARENA.playerRadius);
+    }
+
+    if (player.input.shoot && now - player.lastShotAt >= ARENA.fireCooldownMs) {
+      const aimDx = player.aimX - player.x;
+      const aimDy = player.aimY - player.y;
+      const len = Math.sqrt(aimDx * aimDx + aimDy * aimDy) || 1;
+      const dirX = aimDx / len;
+      const dirY = aimDy / len;
+      room.bullets.push({
+        id: uid("bullet"),
+        ownerId: player.id,
+        x: player.x + dirX * (ARENA.playerRadius + 8),
+        y: player.y + dirY * (ARENA.playerRadius + 8),
+        vx: dirX * ARENA.bulletSpeed,
+        vy: dirY * ARENA.bulletSpeed,
+      });
+      player.lastShotAt = now;
+    }
+  });
+
+  room.bullets = room.bullets.filter((bullet) => {
+    bullet.x += bullet.vx * deltaSeconds;
+    bullet.y += bullet.vy * deltaSeconds;
+
+    if (bullet.x < -20 || bullet.x > ARENA.width + 20 || bullet.y < -20 || bullet.y > ARENA.height + 20) {
+      return false;
+    }
+
+    const target = roomPlayers.find((player) => player.id !== bullet.ownerId && player.alive);
+    if (!target) {
+      return true;
+    }
+
+    if (distance(bullet.x, bullet.y, target.x, target.y) <= ARENA.playerRadius + ARENA.bulletRadius) {
+      const attacker = clients.get(bullet.ownerId);
+      target.hp -= ARENA.damagePerShot;
+      if (target.hp <= 0) {
+        target.hp = 0;
+        target.alive = false;
+        target.deaths += 1;
+        if (attacker) {
+          attacker.kills += 1;
+          attacker.score += 1;
+          if (attacker.score >= ARENA.targetScore) {
+            finishMatch(room, attacker.id);
+          } else {
+            startNextRound(room, `${attacker.name} scored`);
+          }
+        }
+      }
+      return false;
+    }
+
+    return true;
+  });
+}
+
+let lastTickAt = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  const deltaSeconds = Math.min(0.05, (now - lastTickAt) / 1000);
+  lastTickAt = now;
+  rooms.forEach((room) => {
+    updateRoom(room, deltaSeconds, now);
+    broadcastRoomState(room);
+  });
+}, 1000 / 30);
+
+const server = http.createServer((req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (req.method === "GET" && url.pathname === "/healthz") {
-      sendJson(res, 200, { ok: true });
+      sendJson(res, 200, { ok: true, app: APP_NAME });
       return;
     }
-    if (url.pathname.startsWith("/api/")) {
-      await handleApi(req, res, url);
+    if (req.method === "GET" && url.pathname === "/api/config") {
+      sendJson(res, 200, { appName: APP_NAME, adsenseClient: ADSENSE_CLIENT });
       return;
     }
     const requestedPath = url.pathname === "/" ? "/index.html" : url.pathname;
@@ -610,7 +550,70 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-ensureDataFile();
+server.on("upgrade", (req, socket) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  if (url.pathname !== "/ws") {
+    socket.destroy();
+    return;
+  }
+
+  const key = req.headers["sec-websocket-key"];
+  if (!key) {
+    socket.destroy();
+    return;
+  }
+
+  const acceptKey = crypto
+    .createHash("sha1")
+    .update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
+    .digest("base64");
+
+  socket.write(
+    [
+      "HTTP/1.1 101 Switching Protocols",
+      "Upgrade: websocket",
+      "Connection: Upgrade",
+      `Sec-WebSocket-Accept: ${acceptKey}`,
+      "",
+      "",
+    ].join("\r\n"),
+  );
+
+  const player = createPlayer(socket);
+  let buffer = Buffer.alloc(0);
+
+  socket.on("data", (chunk) => {
+    buffer = Buffer.concat([buffer, chunk]);
+    while (true) {
+      const frame = parseFrame(buffer);
+      if (!frame) {
+        break;
+      }
+      buffer = buffer.slice(frame.consumed);
+
+      if (frame.opcode === 0x8) {
+        closeWs(socket);
+        return;
+      }
+      if (frame.opcode === 0x9) {
+        sendRawFrame(socket, 0xA, frame.payload);
+        continue;
+      }
+      if (frame.opcode === 0x1) {
+        try {
+          handleClientMessage(player, frame.payload);
+        } catch {
+          sendWs(socket, { type: "error", message: "잘못된 메시지입니다." });
+        }
+      }
+    }
+  });
+
+  socket.on("close", () => cleanupPlayer(player));
+  socket.on("end", () => cleanupPlayer(player));
+  socket.on("error", () => cleanupPlayer(player));
+});
+
 server.listen(PORT, () => {
-  console.log(`Balance game server running at http://localhost:${PORT}`);
+  console.log(`${APP_NAME} running at http://localhost:${PORT}`);
 });

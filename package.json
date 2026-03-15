@@ -1,8 +1,8 @@
 {
-  "name": "polar-pick",
+  "name": "neon-duel-arena",
   "version": "1.0.0",
   "private": true,
-  "description": "Server-backed balance game and voting community site.",
+  "description": "Realtime online 1v1 browser shooter with WebSocket matchmaking.",
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js && node --check public/app.js"

@@ -3,164 +3,129 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Polar Pick | 밸런스 게임</title>
+    <title>Neon Duel Arena | 1v1 온라인 슈터</title>
+    <meta name="description" content="브라우저에서 바로 즐기는 실시간 1대1 온라인 슈터" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="page-glow page-glow-left"></div>
-    <div class="page-glow page-glow-right"></div>
+    <div class="grid-noise"></div>
+    <div class="glow glow-red"></div>
+    <div class="glow glow-blue"></div>
 
-    <div id="auth-modal" class="overlay visible">
-      <section class="auth-card">
-        <p class="eyebrow">POLAR PICK</p>
-        <h1>둘 중 하나, 지금 바로 골라봐</h1>
-        <p class="auth-copy">
-          질문 올리고, 투표하고, 댓글로 반응을 남기는 밸런스 게임 사이트예요.
+    <div id="entry-overlay" class="overlay visible">
+      <section class="entry-card">
+        <p class="eyebrow">REALTIME 1V1 SHOOTER</p>
+        <h1 id="hero-app-name">Neon Duel Arena</h1>
+        <p class="entry-copy">
+          실시간 매칭으로 상대를 만나고, 마우스로 조준해 먼저 5킬을 올리면 승리합니다.
         </p>
-        <div class="auth-points">
-          <div><strong>실시간 퍼센트</strong><span>선택 즉시 결과 반영</span></div>
-          <div><strong>질문 작성</strong><span>연애, 학교, 음식, 일상 전부 가능</span></div>
-          <div><strong>한줄 댓글</strong><span>왜 골랐는지 가볍게 남기기</span></div>
+        <div class="entry-grid">
+          <div><strong>이동</strong><span>W A S D</span></div>
+          <div><strong>조준</strong><span>마우스</span></div>
+          <div><strong>발사</strong><span>좌클릭 또는 길게 누르기</span></div>
         </div>
-        <div class="auth-controls">
-          <input id="username-input" class="text-input" maxlength="20" placeholder="닉네임 입력" />
-          <div class="auth-actions">
-            <button id="register-button" class="primary-button">처음 시작</button>
-            <button id="login-button" class="ghost-button">기존 닉네임 로그인</button>
-          </div>
+        <div class="entry-actions">
+          <input id="nickname-input" class="text-input" maxlength="20" placeholder="플레이어 닉네임" />
+          <button id="play-button" class="primary-button">매칭 시작</button>
         </div>
-        <p id="auth-status" class="muted-text">2글자 이상 닉네임으로 바로 입장할 수 있어요.</p>
+        <p id="entry-status" class="muted-text">닉네임을 입력하고 바로 입장하세요.</p>
       </section>
     </div>
 
     <main class="app-shell">
-      <header class="topbar">
-        <div class="brand-block">
-          <p class="eyebrow">SOCIAL BALANCE GAME</p>
-          <h2>Polar Pick</h2>
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">BROWSER PVP</p>
+          <h2 id="app-name">Neon Duel Arena</h2>
         </div>
-        <div class="topbar-actions">
-          <div class="top-chip">
-            <span>닉네임</span>
-            <strong id="username-label">Guest</strong>
+        <div class="topbar-meta">
+          <div class="meta-chip">
+            <span>상태</span>
+            <strong id="connection-status">오프라인</strong>
           </div>
-          <div class="top-chip">
-            <span>내 질문</span>
-            <strong id="created-count">0</strong>
+          <div class="meta-chip">
+            <span>플레이어</span>
+            <strong id="player-name">Guest</strong>
           </div>
-          <div class="top-chip accent-chip">
-            <span>내 투표</span>
-            <strong id="voted-count">0</strong>
-          </div>
-          <button id="refresh-button" class="ghost-button small-button">새로고침</button>
-          <button id="logout-button" class="ghost-button small-button">로그아웃</button>
         </div>
       </header>
 
-      <section class="hero-grid">
-        <article class="hero-card">
-          <div class="hero-copy">
-            <p class="eyebrow">TODAY'S FEATURED PICK</p>
-            <h3 id="featured-question">오늘 가장 뜨거운 밸런스 게임</h3>
-            <p id="featured-description" class="muted-text">
-              투표가 몰린 질문을 자동으로 보여줘요. 로그인하고 바로 참여해보세요.
-            </p>
-            <div class="hero-stats">
-              <div class="metric-card">
-                <span>총 질문</span>
-                <strong id="metric-polls">0</strong>
-              </div>
-              <div class="metric-card">
-                <span>총 투표</span>
-                <strong id="metric-votes">0</strong>
-              </div>
-              <div class="metric-card">
-                <span>총 댓글</span>
-                <strong id="metric-comments">0</strong>
-              </div>
-            </div>
-            <button id="jump-featured-button" class="primary-button">대표 질문 보러가기</button>
-          </div>
-          <div class="hero-preview">
-            <div class="preview-label">LIVE SPLIT</div>
-            <div id="featured-options" class="preview-options"></div>
-          </div>
-        </article>
-
-        <article class="side-card">
+      <section class="layout">
+        <aside class="panel side-panel">
           <div class="panel-head">
-            <h3>인기 작성자</h3>
-            <span class="pill">TOP 5</span>
+            <h3>매치 상태</h3>
+            <span class="pill">LIVE</span>
           </div>
-          <div id="creator-list" class="stack-list"></div>
-        </article>
-      </section>
+          <div class="status-stack">
+            <div class="status-card">
+              <span>라운드</span>
+              <strong id="round-label">대기 중</strong>
+            </div>
+            <div class="status-card">
+              <span>안내</span>
+              <strong id="match-message">매칭 전</strong>
+            </div>
+          </div>
 
-      <section class="board-grid">
-        <article class="composer-card">
+          <div class="panel-head top-gap">
+            <h3>점수판</h3>
+            <span class="pill">FIRST TO 5</span>
+          </div>
+          <div id="scoreboard" class="scoreboard"></div>
+
+          <div class="panel-head top-gap">
+            <h3>수익 슬롯</h3>
+            <span class="pill">ADS</span>
+          </div>
+          <div id="side-ad-slot" class="ad-slot" data-ad-slot="2000000001">
+            Google AdSense를 연결하면 여기에 광고가 나옵니다.
+          </div>
+        </aside>
+
+        <section class="panel arena-panel">
+          <div class="arena-head">
+            <div>
+              <p class="eyebrow">ARENA VIEW</p>
+              <h3>1v1 Combat Zone</h3>
+            </div>
+            <div class="arena-badges">
+              <span id="ping-label" class="pill dark-pill">WS</span>
+              <span id="winner-label" class="pill gold-pill">NO WINNER</span>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="game-canvas" width="1600" height="900"></canvas>
+            <div id="arena-overlay" class="arena-overlay">상대를 찾는 중...</div>
+          </div>
+        </section>
+
+        <aside class="panel feed-panel">
           <div class="panel-head">
-            <h3>질문 올리기</h3>
-            <span class="pill">NEW PICK</span>
+            <h3>전투 로그</h3>
+            <span class="pill">RECENT</span>
           </div>
-          <form id="composer-form" class="composer-form">
-            <input id="question-input" class="text-input" maxlength="120" placeholder="예: 평생 여름만 살기 vs 평생 겨울만 살기" />
-            <textarea id="description-input" class="text-input text-area" maxlength="220" placeholder="짧은 설명이나 분위기를 적어보세요 (선택)"></textarea>
-            <div class="split-fields">
-              <input id="option-a-input" class="text-input" maxlength="40" placeholder="선택지 A" />
-              <input id="option-b-input" class="text-input" maxlength="40" placeholder="선택지 B" />
-            </div>
-            <div class="split-fields action-row">
-              <select id="category-input" class="select-input">
-                <option>일상</option>
-                <option>연애</option>
-                <option>음식</option>
-                <option>학교</option>
-                <option>직장</option>
-                <option>기타</option>
-              </select>
-              <button type="submit" class="primary-button">질문 등록</button>
-            </div>
-          </form>
-          <p id="composer-status" class="muted-text">재미있는 질문일수록 반응이 빨라져요.</p>
-        </article>
+          <div id="event-log" class="event-log"></div>
 
-        <article class="feed-card">
-          <div class="panel-head filter-head">
-            <h3>질문 피드</h3>
-            <div class="filter-row">
-              <button data-sort="latest" class="filter-button active">최신순</button>
-              <button data-sort="trending" class="filter-button">인기순</button>
-            </div>
+          <div class="panel-head top-gap">
+            <h3>광고 배너</h3>
+            <span class="pill">ADS</span>
           </div>
-          <div id="category-filters" class="category-row"></div>
-          <div id="poll-list" class="poll-list"></div>
-        </article>
+          <div id="feed-ad-slot" class="ad-slot" data-ad-slot="2000000002">
+            매치 사이드 배너 슬롯
+          </div>
 
-        <article class="detail-card">
-          <div class="panel-head">
-            <h3>질문 상세</h3>
-            <span id="detail-category" class="pill">-</span>
+          <div class="panel-head top-gap">
+            <h3>조작법</h3>
+            <span class="pill">HELP</span>
           </div>
-          <div id="detail-empty" class="detail-empty">
-            왼쪽에서 질문을 고르면 여기서 투표 결과와 댓글을 볼 수 있어요.
+          <div class="help-list">
+            <div><strong>WASD</strong><span>이동</span></div>
+            <div><strong>마우스</strong><span>조준</span></div>
+            <div><strong>좌클릭</strong><span>발사</span></div>
+            <div><strong>5킬</strong><span>매치 승리</span></div>
           </div>
-          <div id="detail-view" class="detail-view hidden">
-            <p id="detail-meta" class="eyebrow"></p>
-            <h3 id="detail-question" class="detail-question"></h3>
-            <p id="detail-description" class="muted-text"></p>
-            <div id="vote-options" class="vote-options"></div>
-            <div class="detail-footer">
-              <strong id="detail-total-votes">0 votes</strong>
-              <span id="detail-user-vote" class="muted-text"></span>
-            </div>
-            <form id="comment-form" class="comment-form">
-              <input id="comment-input" class="text-input" maxlength="160" placeholder="왜 그렇게 골랐는지 한 줄 남겨보세요" />
-              <button type="submit" class="accent-button">댓글 남기기</button>
-            </form>
-            <p id="comment-status" class="muted-text"></p>
-            <div id="comment-list" class="comment-list"></div>
-          </div>
-        </article>
+        </aside>
       </section>
     </main>
 

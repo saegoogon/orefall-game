@@ -1,15 +1,14 @@
-# Polar Pick
+# Neon Duel Arena
 
-간단한 로그인, 질문 작성, 실시간 투표 결과, 댓글 기능이 들어간 밸런스 게임 웹사이트입니다.
+브라우저에서 바로 접속해 즐길 수 있는 실시간 1대1 온라인 슈터입니다.
 
 ## 기능
 
-- 닉네임 기반 입장
-- 밸런스 게임 질문 작성
-- 최신순 / 인기순 질문 피드
-- 질문별 투표와 실시간 퍼센트 표시
-- 한 줄 댓글
-- 인기 작성자와 대표 질문 표시
+- WebSocket 기반 실시간 1대1 매칭
+- WASD 이동, 마우스 조준, 클릭 발사
+- 5킬 선취 승리 룰
+- Render 배포용 설정 포함
+- Google AdSense 슬롯 준비 완료
 
 ## 실행
 
@@ -19,6 +18,10 @@ npm start
 
 기본 주소는 `http://localhost:3000` 입니다.
 
-## 데이터 저장
+## 광고 설정
 
-질문, 사용자, 세션 데이터는 `data/db.json`에 저장됩니다.
+Render 또는 로컬 환경변수에 `ADSENSE_CLIENT=ca-pub-...` 를 넣으면 광고 스크립트를 불러옵니다.
+
+## 배포
+
+[render.yaml](C:\Users\User\Downloads\orefall-idle\render.yaml)에 `neon-duel-arena` 서비스명으로 설정되어 있습니다.

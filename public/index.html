@@ -1,134 +1,113 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gung | 1v1 온라인 슈터</title>
-    <meta name="description" content="브라우저에서 바로 즐기는 실시간 1대1 온라인 슈터" />
+    <title>gung | 3D Duel Shooter</title>
+    <meta name="description" content="Real-time online 1v1 shooter rendered as a 3D neon arena." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="grid-noise"></div>
-    <div class="glow glow-red"></div>
-    <div class="glow glow-blue"></div>
+    <div class="atmosphere"></div>
 
     <div id="entry-overlay" class="overlay visible">
       <section class="entry-card">
-        <p class="eyebrow">REALTIME 1V1 SHOOTER</p>
+        <p class="eyebrow">ENGINE MODE</p>
         <h1 id="hero-app-name">gung</h1>
         <p class="entry-copy">
-          실시간 매칭으로 상대를 만나고, 마우스로 조준해 먼저 5킬을 올리면 승리합니다.
+          Real-time 1v1 duel shooter with a true 3D arena view. Move with `WASD`, aim with the mouse, and land 5 kills first.
         </p>
         <div class="entry-grid">
-          <div><strong>이동</strong><span>W A S D</span></div>
-          <div><strong>조준</strong><span>마우스</span></div>
-          <div><strong>발사</strong><span>좌클릭 또는 길게 누르기</span></div>
+          <div><strong>Movement</strong><span>W A S D</span></div>
+          <div><strong>Aim</strong><span>Mouse</span></div>
+          <div><strong>Fire</strong><span>Hold left click</span></div>
         </div>
         <div class="entry-actions">
-          <input id="nickname-input" class="text-input" maxlength="20" placeholder="플레이어 닉네임" />
-          <button id="play-button" class="primary-button">매칭 시작</button>
+          <input id="nickname-input" class="text-input" maxlength="20" placeholder="Pilot name" />
+          <button id="play-button" class="primary-button">Enter Arena</button>
         </div>
-        <p id="entry-status" class="muted-text">닉네임을 입력하고 바로 입장하세요.</p>
+        <p id="entry-status" class="muted-text">Pick a name and jump into matchmaking.</p>
       </section>
     </div>
 
     <main class="app-shell">
-      <header class="topbar panel">
+      <header class="topbar shell-panel">
         <div>
-          <p class="eyebrow">BROWSER PVP</p>
+          <p class="eyebrow">3D REALTIME PVP</p>
           <h2 id="app-name">gung</h2>
         </div>
         <div class="topbar-meta">
           <div class="meta-chip">
-            <span>상태</span>
-            <strong id="connection-status">오프라인</strong>
+            <span>Network</span>
+            <strong id="connection-status">Offline</strong>
           </div>
           <div class="meta-chip">
-            <span>플레이어</span>
+            <span>Pilot</span>
             <strong id="player-name">Guest</strong>
           </div>
         </div>
       </header>
 
-      <section class="layout">
-        <aside class="panel side-panel">
-          <div class="panel-head">
-            <h3>매치 상태</h3>
-            <span class="pill">LIVE</span>
-          </div>
-          <div class="status-stack">
-            <div class="status-card">
-              <span>라운드</span>
-              <strong id="round-label">대기 중</strong>
-            </div>
-            <div class="status-card">
-              <span>안내</span>
-              <strong id="match-message">매칭 전</strong>
-            </div>
-          </div>
-
-          <div class="panel-head top-gap">
-            <h3>점수판</h3>
-            <span class="pill">FIRST TO 5</span>
-          </div>
-          <div id="scoreboard" class="scoreboard"></div>
-
-          <div class="panel-head top-gap">
-            <h3>수익 슬롯</h3>
-            <span class="pill">ADS</span>
-          </div>
-          <div id="side-ad-slot" class="ad-slot" data-ad-slot="2000000001">
-            Google AdSense를 연결하면 여기에 광고가 나옵니다.
-          </div>
-        </aside>
-
-        <section class="panel arena-panel">
-          <div class="arena-head">
+      <section class="experience-grid">
+        <section class="viewer shell-panel">
+          <div class="viewer-top">
             <div>
-              <p class="eyebrow">ARENA VIEW</p>
-              <h3>1v1 Combat Zone</h3>
+              <p class="eyebrow">LIVE MATCH</p>
+              <h3>Neon Duel Chamber</h3>
             </div>
-            <div class="arena-badges">
-              <span id="ping-label" class="pill dark-pill">WS</span>
-              <span id="winner-label" class="pill gold-pill">NO WINNER</span>
+            <div class="viewer-badges">
+              <span id="round-label" class="badge">Queue</span>
+              <span id="winner-label" class="badge badge-gold">No Winner</span>
             </div>
           </div>
-          <div class="canvas-wrap">
-            <canvas id="game-canvas" width="1600" height="900"></canvas>
-            <div id="arena-overlay" class="arena-overlay">상대를 찾는 중...</div>
+
+          <div class="render-wrap">
+            <div id="render-stage" class="render-stage"></div>
+            <div class="hud-layer">
+              <div class="floating-card left-card">
+                <span>Status</span>
+                <strong id="match-message">Searching for opponent...</strong>
+              </div>
+              <div class="floating-card right-card">
+                <span>Socket</span>
+                <strong id="ping-label">WS</strong>
+              </div>
+            </div>
+            <div id="arena-overlay" class="arena-overlay">Searching for opponent...</div>
           </div>
         </section>
 
-        <aside class="panel feed-panel">
-          <div class="panel-head">
-            <h3>전투 로그</h3>
-            <span class="pill">RECENT</span>
-          </div>
-          <div id="event-log" class="event-log"></div>
+        <aside class="sidebar">
+          <section class="shell-panel score-panel">
+            <div class="panel-head">
+              <h3>Scoreboard</h3>
+              <span class="badge">First To 5</span>
+            </div>
+            <div id="scoreboard" class="scoreboard"></div>
+          </section>
 
-          <div class="panel-head top-gap">
-            <h3>광고 배너</h3>
-            <span class="pill">ADS</span>
-          </div>
-          <div id="feed-ad-slot" class="ad-slot" data-ad-slot="2000000002">
-            매치 사이드 배너 슬롯
-          </div>
+          <section class="shell-panel log-panel">
+            <div class="panel-head">
+              <h3>Combat Feed</h3>
+              <span class="badge">Live</span>
+            </div>
+            <div id="event-log" class="event-log"></div>
+          </section>
 
-          <div class="panel-head top-gap">
-            <h3>조작법</h3>
-            <span class="pill">HELP</span>
-          </div>
-          <div class="help-list">
-            <div><strong>WASD</strong><span>이동</span></div>
-            <div><strong>마우스</strong><span>조준</span></div>
-            <div><strong>좌클릭</strong><span>발사</span></div>
-            <div><strong>5킬</strong><span>매치 승리</span></div>
-          </div>
+          <section class="shell-panel ad-panel">
+            <div class="panel-head">
+              <h3>Ad Slot</h3>
+              <span class="badge badge-gold">Monetize</span>
+            </div>
+            <div id="side-ad-slot" class="ad-slot" data-ad-slot="2000000001">
+              AdSense client goes here when `ADSENSE_CLIENT` is configured.
+            </div>
+          </section>
         </aside>
       </section>
     </main>
 
-    <script src="/app.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

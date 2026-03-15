@@ -49,10 +49,10 @@ function securityHeaders() {
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": [
       "default-src 'self'",
-      "script-src 'self' https://pagead2.googlesyndication.com",
+      "script-src 'self' https://pagead2.googlesyndication.com https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
-      "connect-src 'self' ws: wss: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
+      "connect-src 'self' ws: wss: https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://cdn.jsdelivr.net",
       "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
       "base-uri 'self'",
       "form-action 'self'",

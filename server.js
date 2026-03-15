@@ -19,18 +19,31 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
+const OBSTACLES = [
+  { x: 510, y: 260, width: 110, height: 220 },
+  { x: 1090, y: 260, width: 110, height: 220 },
+  { x: 800, y: 160, width: 160, height: 100 },
+  { x: 800, y: 740, width: 160, height: 100 },
+  { x: 800, y: 450, width: 180, height: 180 },
+];
+
 const ARENA = {
   width: 1600,
   height: 900,
   playerRadius: 26,
   bulletRadius: 7,
   playerSpeed: 380,
+  dashDistance: 180,
+  dashCooldownMs: 1700,
   bulletSpeed: 980,
   fireCooldownMs: 180,
   damagePerShot: 34,
+  magazineSize: 10,
+  reloadMs: 1400,
   roundResetMs: 1600,
   matchResetMs: 4200,
   targetScore: 5,
+  obstacles: OBSTACLES,
 };
 
 const clients = new Map();
@@ -89,6 +102,42 @@ function normalizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function distance(aX, aY, bX, bY) {
+  const dx = aX - bX;
+  const dy = aY - bY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function collidesCircleRect(x, y, radius, rect) {
+  const nearestX = clamp(x, rect.x - rect.width / 2, rect.x + rect.width / 2);
+  const nearestY = clamp(y, rect.y - rect.height / 2, rect.y + rect.height / 2);
+  const dx = x - nearestX;
+  const dy = y - nearestY;
+  return dx * dx + dy * dy < radius * radius;
+}
+
+function collidesArena(x, y, radius) {
+  if (x < radius || x > ARENA.width - radius || y < radius || y > ARENA.height - radius) {
+    return true;
+  }
+  return OBSTACLES.some((obstacle) => collidesCircleRect(x, y, radius, obstacle));
+}
+
+function moveWithCollisions(player, deltaX, deltaY) {
+  const tryX = player.x + deltaX;
+  if (!collidesArena(tryX, player.y, ARENA.playerRadius)) {
+    player.x = tryX;
+  }
+  const tryY = player.y + deltaY;
+  if (!collidesArena(player.x, tryY, ARENA.playerRadius)) {
+    player.y = tryY;
+  }
+}
+
 function createPlayer(socket) {
   const id = uid("player");
   const player = {
@@ -103,14 +152,71 @@ function createPlayer(socket) {
     aimY: 0,
     hp: 100,
     alive: false,
-    input: { up: false, down: false, left: false, right: false, shoot: false },
+    ammo: ARENA.magazineSize,
+    maxAmmo: ARENA.magazineSize,
+    reloading: false,
+    reloadEndsAt: 0,
+    dashReadyAt: 0,
+    input: {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      shoot: false,
+      reload: false,
+      dash: false,
+    },
     lastShotAt: 0,
+    lastDashAt: 0,
+    lastHitAt: 0,
     score: 0,
     kills: 0,
     deaths: 0,
   };
   clients.set(id, player);
   return player;
+}
+
+function playerSpawn(index) {
+  return index === 0
+    ? { x: 220, y: ARENA.height / 2 }
+    : { x: ARENA.width - 220, y: ARENA.height / 2 };
+}
+
+function startReload(player, now) {
+  if (!player.alive || player.reloading || player.ammo >= player.maxAmmo) {
+    return;
+  }
+  player.reloading = true;
+  player.reloadEndsAt = now + ARENA.reloadMs;
+}
+
+function finishReload(player) {
+  player.reloading = false;
+  player.reloadEndsAt = 0;
+  player.ammo = player.maxAmmo;
+}
+
+function respawnPlayers(room) {
+  room.players.forEach((playerId, index) => {
+    const player = clients.get(playerId);
+    if (!player) {
+      return;
+    }
+    const spawn = playerSpawn(index);
+    player.x = spawn.x;
+    player.y = spawn.y;
+    player.aimX = index === 0 ? ARENA.width : 0;
+    player.aimY = ARENA.height / 2;
+    player.hp = 100;
+    player.alive = true;
+    player.ammo = player.maxAmmo;
+    player.reloading = false;
+    player.reloadEndsAt = 0;
+    player.input.shoot = false;
+    player.input.reload = false;
+    player.input.dash = false;
+  });
 }
 
 function createRoom(firstPlayer, secondPlayer) {
@@ -136,38 +242,6 @@ function createRoom(firstPlayer, secondPlayer) {
   return room;
 }
 
-function playerSpawn(index) {
-  return index === 0
-    ? { x: 220, y: ARENA.height / 2 }
-    : { x: ARENA.width - 220, y: ARENA.height / 2 };
-}
-
-function respawnPlayers(room) {
-  room.players.forEach((playerId, index) => {
-    const player = clients.get(playerId);
-    if (!player) {
-      return;
-    }
-    const spawn = playerSpawn(index);
-    player.x = spawn.x;
-    player.y = spawn.y;
-    player.aimX = index === 0 ? ARENA.width : 0;
-    player.aimY = ARENA.height / 2;
-    player.hp = 100;
-    player.alive = true;
-    player.input.shoot = false;
-  });
-}
-
-function broadcast(playerIds, message) {
-  playerIds.forEach((playerId) => {
-    const player = clients.get(playerId);
-    if (player) {
-      sendWs(player.socket, message);
-    }
-  });
-}
-
 function roomStateFor(room, selfId) {
   return {
     type: "state",
@@ -177,6 +251,7 @@ function roomStateFor(room, selfId) {
       width: ARENA.width,
       height: ARENA.height,
       targetScore: ARENA.targetScore,
+      obstacles: ARENA.obstacles,
     },
     room: {
       id: room.id,
@@ -197,11 +272,19 @@ function roomStateFor(room, selfId) {
         y: player.y,
         hp: player.hp,
         alive: player.alive,
+        ammo: player.ammo,
+        maxAmmo: player.maxAmmo,
+        reloading: player.reloading,
+        reloadEndsAt: player.reloadEndsAt,
+        dashReadyAt: player.dashReadyAt,
         score: player.score,
         kills: player.kills,
         deaths: player.deaths,
         aimX: player.aimX,
         aimY: player.aimY,
+        lastShotAt: player.lastShotAt,
+        lastDashAt: player.lastDashAt,
+        lastHitAt: player.lastHitAt,
       })),
     bullets: room.bullets.map((bullet) => ({
       x: bullet.x,
@@ -220,13 +303,13 @@ function broadcastRoomState(room) {
   });
 }
 
-function sendQueueState(player) {
+function sendQueueState(player, message = "Searching for opponent...") {
   sendWs(player.socket, {
     type: "queue",
     appName: APP_NAME,
     adsenseClient: ADSENSE_CLIENT,
     waiting: true,
-    message: "상대를 찾는 중입니다...",
+    message,
   });
 }
 
@@ -259,12 +342,7 @@ function cleanupPlayer(player) {
       const other = clients.get(otherId);
       if (other) {
         other.roomId = null;
-        sendWs(other.socket, {
-          type: "queue",
-          appName: APP_NAME,
-          waiting: true,
-          message: "상대가 나갔습니다. 새 상대를 찾는 중...",
-        });
+        sendQueueState(other, "Opponent disconnected. Searching again...");
         queueOrMatch(other);
       }
       removeRoom(room.id);
@@ -376,20 +454,12 @@ function handleClientMessage(player, data) {
       left: Boolean(message.input?.left),
       right: Boolean(message.input?.right),
       shoot: Boolean(message.input?.shoot),
+      reload: Boolean(message.input?.reload),
+      dash: Boolean(message.input?.dash),
     };
     player.aimX = Number.isFinite(message.aim?.x) ? message.aim.x : player.aimX;
     player.aimY = Number.isFinite(message.aim?.y) ? message.aim.y : player.aimY;
   }
-}
-
-function distance(aX, aY, bX, bY) {
-  const dx = aX - bX;
-  const dy = aY - bY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function startNextRound(room, reason) {
@@ -406,6 +476,38 @@ function finishMatch(room, winnerId) {
   room.winnerId = winnerId;
   room.statusText = `${clients.get(winnerId)?.name || "Winner"} wins the match`;
   room.resetAt = Date.now() + ARENA.matchResetMs;
+}
+
+function dashPlayer(player, now) {
+  if (!player.alive || now < player.dashReadyAt) {
+    return;
+  }
+
+  let dirX = 0;
+  let dirY = 0;
+  if (player.input.left) dirX -= 1;
+  if (player.input.right) dirX += 1;
+  if (player.input.up) dirY -= 1;
+  if (player.input.down) dirY += 1;
+
+  if (dirX === 0 && dirY === 0) {
+    const aimDx = player.aimX - player.x;
+    const aimDy = player.aimY - player.y;
+    const aimLength = Math.sqrt(aimDx * aimDx + aimDy * aimDy) || 1;
+    dirX = aimDx / aimLength;
+    dirY = aimDy / aimLength;
+  } else {
+    const length = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
+    dirX /= length;
+    dirY /= length;
+  }
+
+  for (let step = 0; step < 9; step += 1) {
+    moveWithCollisions(player, (dirX * ARENA.dashDistance) / 9, (dirY * ARENA.dashDistance) / 9);
+  }
+
+  player.dashReadyAt = now + ARENA.dashCooldownMs;
+  player.lastDashAt = now;
 }
 
 function updateRoom(room, deltaSeconds, now) {
@@ -436,9 +538,23 @@ function updateRoom(room, deltaSeconds, now) {
   }
 
   const roomPlayers = room.players.map((id) => clients.get(id)).filter(Boolean);
+
   roomPlayers.forEach((player) => {
     if (!player.alive) {
       return;
+    }
+
+    if (player.reloading && now >= player.reloadEndsAt) {
+      finishReload(player);
+    }
+
+    if (player.input.reload) {
+      startReload(player, now);
+    }
+
+    if (player.input.dash) {
+      dashPlayer(player, now);
+      player.input.dash = false;
     }
 
     let moveX = 0;
@@ -449,14 +565,22 @@ function updateRoom(room, deltaSeconds, now) {
     if (player.input.down) moveY += 1;
 
     if (moveX !== 0 || moveY !== 0) {
-      const length = Math.sqrt(moveX * moveX + moveY * moveY);
+      const length = Math.sqrt(moveX * moveX + moveY * moveY) || 1;
       moveX /= length;
       moveY /= length;
-      player.x = clamp(player.x + moveX * ARENA.playerSpeed * deltaSeconds, ARENA.playerRadius, ARENA.width - ARENA.playerRadius);
-      player.y = clamp(player.y + moveY * ARENA.playerSpeed * deltaSeconds, ARENA.playerRadius, ARENA.height - ARENA.playerRadius);
+      moveWithCollisions(
+        player,
+        moveX * ARENA.playerSpeed * deltaSeconds,
+        moveY * ARENA.playerSpeed * deltaSeconds,
+      );
     }
 
-    if (player.input.shoot && now - player.lastShotAt >= ARENA.fireCooldownMs) {
+    if (
+      player.input.shoot &&
+      !player.reloading &&
+      player.ammo > 0 &&
+      now - player.lastShotAt >= ARENA.fireCooldownMs
+    ) {
       const aimDx = player.aimX - player.x;
       const aimDy = player.aimY - player.y;
       const len = Math.sqrt(aimDx * aimDx + aimDy * aimDy) || 1;
@@ -470,7 +594,11 @@ function updateRoom(room, deltaSeconds, now) {
         vx: dirX * ARENA.bulletSpeed,
         vy: dirY * ARENA.bulletSpeed,
       });
+      player.ammo -= 1;
       player.lastShotAt = now;
+      if (player.ammo === 0) {
+        startReload(player, now);
+      }
     }
   });
 
@@ -482,6 +610,10 @@ function updateRoom(room, deltaSeconds, now) {
       return false;
     }
 
+    if (collidesArena(bullet.x, bullet.y, ARENA.bulletRadius)) {
+      return false;
+    }
+
     const target = roomPlayers.find((player) => player.id !== bullet.ownerId && player.alive);
     if (!target) {
       return true;
@@ -490,6 +622,7 @@ function updateRoom(room, deltaSeconds, now) {
     if (distance(bullet.x, bullet.y, target.x, target.y) <= ARENA.playerRadius + ARENA.bulletRadius) {
       const attacker = clients.get(bullet.ownerId);
       target.hp -= ARENA.damagePerShot;
+      target.lastHitAt = now;
       if (target.hp <= 0) {
         target.hp = 0;
         target.alive = false;
@@ -603,7 +736,7 @@ server.on("upgrade", (req, socket) => {
         try {
           handleClientMessage(player, frame.payload);
         } catch {
-          sendWs(socket, { type: "error", message: "잘못된 메시지입니다." });
+          sendWs(socket, { type: "error", message: "Invalid message" });
         }
       }
     }

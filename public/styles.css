@@ -205,6 +205,29 @@ p {
   text-align: right;
 }
 
+.bottom-left-card {
+  left: 16px;
+  bottom: 16px;
+  top: auto;
+}
+
+.bottom-right-card {
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  text-align: right;
+}
+
+.damage-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at center, rgba(255, 75, 75, 0.08), rgba(255, 45, 45, 0.24)),
+    linear-gradient(180deg, rgba(255, 65, 65, 0.08), rgba(255, 65, 65, 0.12));
+}
+
 .arena-overlay {
   position: absolute;
   inset: 0;
@@ -380,5 +403,22 @@ p {
   .right-card {
     top: 86px;
     text-align: left;
+  }
+
+  .bottom-left-card,
+  .bottom-right-card {
+    left: 12px;
+    right: 12px;
+    text-align: left;
+  }
+
+  .bottom-left-card {
+    top: auto;
+    bottom: 80px;
+  }
+
+  .bottom-right-card {
+    top: auto;
+    bottom: 12px;
   }
 }

@@ -14,7 +14,10 @@ const elements = {
   scoreboard: document.querySelector("#scoreboard"),
   pingLabel: document.querySelector("#ping-label"),
   winnerLabel: document.querySelector("#winner-label"),
+  ammoLabel: document.querySelector("#ammo-label"),
+  dashLabel: document.querySelector("#dash-label"),
   arenaOverlay: document.querySelector("#arena-overlay"),
+  damageFlash: document.querySelector("#damage-flash"),
   eventLog: document.querySelector("#event-log"),
   renderStage: document.querySelector("#render-stage"),
 };
@@ -30,11 +33,13 @@ const state = {
   room: null,
   players: [],
   bullets: [],
-  arena: { width: 1600, height: 900, targetScore: 5 },
+  arena: { width: 1600, height: 900, targetScore: 5, obstacles: [] },
   mouse: { x: 800, y: 450, down: false },
   keys: { up: false, down: false, left: false, right: false },
+  actions: { reload: false, dash: false },
   log: ["Stand by"],
   pingTick: 0,
+  damageFlash: 0,
 };
 
 const visuals = {
@@ -44,8 +49,11 @@ const visuals = {
   clock: new THREE.Clock(),
   playerMeshes: new Map(),
   bulletMeshes: [],
-  floor: null,
+  impactMeshes: [],
   reticle: null,
+  audioContext: null,
+  recoilKick: 0,
+  dashPulse: 0,
 };
 
 function addLog(message) {
@@ -67,6 +75,59 @@ function renderLog() {
 function setEntryStatus(message, isError = false) {
   elements.entryStatus.textContent = message;
   elements.entryStatus.style.color = isError ? "#ff8f8f" : "";
+}
+
+function ensureAudio() {
+  if (!visuals.audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      return null;
+    }
+    visuals.audioContext = new AudioContextClass();
+  }
+  if (visuals.audioContext.state === "suspended") {
+    visuals.audioContext.resume();
+  }
+  return visuals.audioContext;
+}
+
+function playTone(freq, duration, type, gainValue = 0.04) {
+  const ctx = ensureAudio();
+  if (!ctx) {
+    return;
+  }
+  const now = ctx.currentTime;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(freq, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(gainValue, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration + 0.03);
+}
+
+function playShotSound() {
+  playTone(220, 0.08, "square", 0.03);
+  playTone(110, 0.12, "triangle", 0.02);
+}
+
+function playHitSound() {
+  playTone(480, 0.06, "sawtooth", 0.035);
+  playTone(320, 0.12, "triangle", 0.025);
+}
+
+function playReloadSound() {
+  playTone(180, 0.08, "sine", 0.02);
+  setTimeout(() => playTone(240, 0.1, "sine", 0.02), 100);
+}
+
+function playDashSound() {
+  playTone(90, 0.06, "sawtooth", 0.04);
+  setTimeout(() => playTone(180, 0.08, "triangle", 0.03), 40);
 }
 
 async function loadConfig() {
@@ -113,7 +174,12 @@ function mountAds() {
   });
 }
 
+function selfPlayer() {
+  return state.players.find((player) => player.id === state.playerId) || null;
+}
+
 function updateHud() {
+  const self = selfPlayer();
   elements.connectionStatus.textContent = state.connected ? "Online" : "Offline";
   elements.playerName.textContent = state.playerName;
   elements.roundLabel.textContent = state.room ? `Round ${state.room.round}` : "Queue";
@@ -122,6 +188,14 @@ function updateHud() {
     ? `${state.players.find((player) => player.id === state.room.winnerId)?.name || "Winner"} Wins`
     : "No Winner";
   elements.pingLabel.textContent = `WS ${state.pingTick++ % 2 ? "LIVE" : "SYNC"}`;
+  elements.ammoLabel.textContent = self ? `${self.ammo} / ${self.maxAmmo}${self.reloading ? " Reloading" : ""}` : "10 / 10";
+
+  if (self) {
+    const remaining = Math.max(0, self.dashReadyAt - Date.now());
+    elements.dashLabel.textContent = remaining > 0 ? `Dash ${Math.ceil(remaining / 100) / 10}s` : "Dash Ready";
+  } else {
+    elements.dashLabel.textContent = "Dash Ready";
+  }
 
   elements.scoreboard.innerHTML = "";
   if (!state.players.length) {
@@ -139,7 +213,7 @@ function updateHud() {
       </div>
       <div class="score-foot">
         <span>${player.score} / ${state.arena.targetScore}</span>
-        <span>K ${player.kills} | D ${player.deaths}</span>
+        <span>${player.ammo}/${player.maxAmmo} | K ${player.kills} | D ${player.deaths}</span>
       </div>
     `;
     elements.scoreboard.appendChild(node);
@@ -164,11 +238,11 @@ function createRenderer() {
   scene.fog = new THREE.Fog(0x050916, 24, 60);
   visuals.scene = scene;
 
-  const camera = new THREE.PerspectiveCamera(48, 16 / 9, 0.1, 120);
+  const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 120);
   camera.position.set(0, 18, 18);
   visuals.camera = camera;
 
-  const hemi = new THREE.HemisphereLight(0x7ec8ff, 0x050916, 1.1);
+  const hemi = new THREE.HemisphereLight(0x7ec8ff, 0x050916, 1.2);
   scene.add(hemi);
 
   const key = new THREE.DirectionalLight(0xffffff, 1.7);
@@ -182,11 +256,11 @@ function createRenderer() {
   key.shadow.camera.bottom = -20;
   scene.add(key);
 
-  const rimLeft = new THREE.PointLight(0xff4f7d, 22, 28, 2);
+  const rimLeft = new THREE.PointLight(0xff4f7d, 24, 30, 2);
   rimLeft.position.set(-10, 2.5, 0);
   scene.add(rimLeft);
 
-  const rimRight = new THREE.PointLight(0x44d9ff, 22, 28, 2);
+  const rimRight = new THREE.PointLight(0x44d9ff, 24, 30, 2);
   rimRight.position.set(10, 2.5, 0);
   scene.add(rimRight);
 
@@ -198,18 +272,18 @@ function buildArena(scene) {
   const arenaWidth = state.arena.width / 80;
   const arenaDepth = state.arena.height / 80;
 
-  const floorGeometry = new THREE.PlaneGeometry(arenaWidth, arenaDepth, 24, 24);
-  const floorMaterial = new THREE.MeshStandardMaterial({
-    color: 0x101a32,
-    emissive: 0x07101f,
-    metalness: 0.55,
-    roughness: 0.35,
-  });
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(arenaWidth, arenaDepth, 24, 24),
+    new THREE.MeshStandardMaterial({
+      color: 0x101a32,
+      emissive: 0x07101f,
+      metalness: 0.55,
+      roughness: 0.35,
+    }),
+  );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
-  visuals.floor = floor;
 
   const grid = new THREE.GridHelper(arenaWidth, 20, 0x2dcfff, 0x133159);
   grid.position.y = 0.02;
@@ -221,25 +295,17 @@ function buildArena(scene) {
     metalness: 0.65,
     roughness: 0.25,
   });
-  const glowMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    emissive: 0xffc461,
-    emissiveIntensity: 1.8,
-    toneMapped: false,
-  });
-
   const wallThickness = 0.6;
   const wallHeight = 2.8;
   const horizontalWallGeometry = new THREE.BoxGeometry(arenaWidth + 1, wallHeight, wallThickness);
   const verticalWallGeometry = new THREE.BoxGeometry(wallThickness, wallHeight, arenaDepth + 1);
-  const walls = [
+
+  [
     { geometry: horizontalWallGeometry, position: [0, wallHeight / 2, arenaDepth / 2 + 0.2] },
     { geometry: horizontalWallGeometry, position: [0, wallHeight / 2, -arenaDepth / 2 - 0.2] },
     { geometry: verticalWallGeometry, position: [arenaWidth / 2 + 0.2, wallHeight / 2, 0] },
     { geometry: verticalWallGeometry, position: [-arenaWidth / 2 - 0.2, wallHeight / 2, 0] },
-  ];
-
-  walls.forEach((wall) => {
+  ].forEach((wall) => {
     const mesh = new THREE.Mesh(wall.geometry, wallMaterial);
     mesh.position.set(...wall.position);
     mesh.castShadow = true;
@@ -247,41 +313,43 @@ function buildArena(scene) {
     scene.add(mesh);
   });
 
-  const pillarGeometry = new THREE.CylinderGeometry(0.35, 0.35, 3.6, 20);
-  const pillarGlowGeometry = new THREE.CylinderGeometry(0.12, 0.12, 3.7, 12);
-  const pillarPositions = [
-    [-5.5, 1.8, -2.6],
-    [-5.5, 1.8, 2.6],
-    [5.5, 1.8, -2.6],
-    [5.5, 1.8, 2.6],
-    [0, 1.8, -4.2],
-    [0, 1.8, 4.2],
-  ];
-
-  pillarPositions.forEach((position, index) => {
-    const pillar = new THREE.Mesh(pillarGeometry, wallMaterial);
-    pillar.position.set(position[0], position[1], position[2]);
-    pillar.castShadow = true;
-    scene.add(pillar);
-
-    const glow = new THREE.Mesh(
-      pillarGlowGeometry,
-      glowMaterial.clone(),
+  state.arena.obstacles.forEach((obstacle, index) => {
+    const obstacleMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(obstacle.width / 80, 2.8, obstacle.height / 80),
+      new THREE.MeshStandardMaterial({
+        color: 0x1a2848,
+        emissive: index % 2 === 0 ? 0x18142a : 0x102634,
+        metalness: 0.7,
+        roughness: 0.2,
+      }),
     );
-    glow.material.emissive = new THREE.Color(index % 2 === 0 ? 0xff5a7a : 0x59d8ff);
-    glow.material.color = new THREE.Color(index % 2 === 0 ? 0xff95aa : 0x9feeff);
-    glow.position.copy(pillar.position);
-    scene.add(glow);
+    obstacleMesh.position.set(
+      (obstacle.x - state.arena.width / 2) / 80,
+      1.4,
+      (obstacle.y - state.arena.height / 2) / 80,
+    );
+    obstacleMesh.castShadow = true;
+    obstacleMesh.receiveShadow = true;
+    scene.add(obstacleMesh);
+
+    const outline = new THREE.Mesh(
+      new THREE.BoxGeometry(obstacle.width / 80 + 0.06, 2.85, obstacle.height / 80 + 0.06),
+      new THREE.MeshBasicMaterial({
+        color: index % 2 === 0 ? 0xff5a7a : 0x59d8ff,
+        wireframe: true,
+      }),
+    );
+    outline.position.copy(obstacleMesh.position);
+    scene.add(outline);
   });
 
-  const reticle = new THREE.Mesh(
+  visuals.reticle = new THREE.Mesh(
     new THREE.TorusGeometry(0.35, 0.03, 10, 32),
     new THREE.MeshBasicMaterial({ color: 0xffcb61 }),
   );
-  reticle.rotation.x = Math.PI / 2;
-  reticle.position.set(0, 0.08, 0);
-  scene.add(reticle);
-  visuals.reticle = reticle;
+  visuals.reticle.rotation.x = Math.PI / 2;
+  visuals.reticle.position.set(0, 0.08, 0);
+  scene.add(visuals.reticle);
 }
 
 function resizeRenderer() {
@@ -298,16 +366,15 @@ function resizeRenderer() {
 function createPlayerMesh(color) {
   const group = new THREE.Group();
 
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.32, 0.65, 8, 16),
-    new THREE.MeshStandardMaterial({
-      color: new THREE.Color(color),
-      emissive: new THREE.Color(color),
-      emissiveIntensity: 0.3,
-      metalness: 0.5,
-      roughness: 0.24,
-    }),
-  );
+  const bodyMaterial = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(color),
+    emissive: new THREE.Color(color),
+    emissiveIntensity: 0.3,
+    metalness: 0.5,
+    roughness: 0.24,
+  });
+
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.65, 8, 16), bodyMaterial);
   body.position.y = 0.75;
   body.castShadow = true;
   group.add(body);
@@ -340,6 +407,7 @@ function createPlayerMesh(color) {
   glowRing.position.y = 0.1;
   group.add(glowRing);
 
+  group.userData = { bodyMaterial, gun };
   return group;
 }
 
@@ -361,6 +429,17 @@ function ensurePlayerMeshes() {
   });
 }
 
+function spawnImpact(player) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.25, 0.34, 24),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(player.color), transparent: true, opacity: 0.9, side: THREE.DoubleSide }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set((player.x - state.arena.width / 2) / 80, 0.08, (player.y - state.arena.height / 2) / 80);
+  visuals.scene.add(ring);
+  visuals.impactMeshes.push({ mesh: ring, life: 0.45, maxLife: 0.45, grow: 2.4 });
+}
+
 function syncPlayersToScene(delta) {
   ensurePlayerMeshes();
   state.players.forEach((player) => {
@@ -377,8 +456,9 @@ function syncPlayersToScene(delta) {
     const targetRotation = -angle + Math.PI / 2;
     mesh.rotation.y = THREE.MathUtils.lerp(mesh.rotation.y, targetRotation, Math.min(1, delta * 12));
 
-    mesh.children[0].material.emissiveIntensity = player.id === state.playerId ? 0.52 : 0.3;
-    mesh.visible = player.alive;
+    mesh.userData.bodyMaterial.emissiveIntensity = player.id === state.playerId ? 0.52 : 0.3;
+    mesh.scale.setScalar(player.alive ? 1 : 0.88);
+    mesh.visible = true;
   });
 }
 
@@ -409,8 +489,22 @@ function syncBulletsToScene() {
   });
 }
 
+function updateImpacts(delta) {
+  visuals.impactMeshes = visuals.impactMeshes.filter((impact) => {
+    impact.life -= delta;
+    if (impact.life <= 0) {
+      visuals.scene.remove(impact.mesh);
+      return false;
+    }
+    const progress = 1 - impact.life / impact.maxLife;
+    impact.mesh.scale.setScalar(1 + progress * impact.grow);
+    impact.mesh.material.opacity = 1 - progress;
+    return true;
+  });
+}
+
 function updateCamera(delta) {
-  const self = state.players.find((player) => player.id === state.playerId) || state.players[0];
+  const self = selfPlayer() || state.players[0];
   if (!self) {
     return;
   }
@@ -420,15 +514,22 @@ function updateCamera(delta) {
     0,
     (self.y - state.arena.height / 2) / 80,
   );
-  const camTarget = new THREE.Vector3(target.x, 12.5, target.z + 9.5);
-  visuals.camera.position.lerp(camTarget, Math.min(1, delta * 4));
-  visuals.camera.lookAt(target.x, 0.8, target.z - 1.5);
+
+  const baseHeight = 12.5 + visuals.recoilKick * 1.8;
+  const baseDistance = 9.8 + visuals.recoilKick * 1.1;
+  const dashLift = visuals.dashPulse * 1.2;
+  const cameraTarget = new THREE.Vector3(target.x, baseHeight + dashLift, target.z + baseDistance);
+  visuals.camera.position.lerp(cameraTarget, Math.min(1, delta * 4));
+  visuals.camera.lookAt(target.x, 0.8 + visuals.recoilKick * 0.4, target.z - 1.7);
 
   visuals.reticle.position.set(
     (state.mouse.x - state.arena.width / 2) / 80,
     0.06,
     (state.mouse.y - state.arena.height / 2) / 80,
   );
+
+  visuals.recoilKick = Math.max(0, visuals.recoilKick - delta * 4.5);
+  visuals.dashPulse = Math.max(0, visuals.dashPulse - delta * 2.8);
 }
 
 function connect() {
@@ -466,12 +567,46 @@ function connect() {
     }
 
     if (payload.type === "state") {
+      const previousPlayers = new Map(state.players.map((player) => [player.id, player]));
       const previousWinner = state.room?.winnerId;
+
       state.playerId = payload.selfId;
       state.room = payload.room;
       state.players = payload.players;
       state.bullets = payload.bullets;
       state.arena = payload.arena;
+
+      state.players.forEach((player) => {
+        const previous = previousPlayers.get(player.id);
+        if (!previous) {
+          return;
+        }
+        if (player.lastShotAt > previous.lastShotAt) {
+          if (player.id === state.playerId) {
+            visuals.recoilKick = Math.min(1.2, visuals.recoilKick + 0.6);
+            playShotSound();
+          }
+        }
+        if (player.lastHitAt > previous.lastHitAt) {
+          spawnImpact(player);
+          if (player.id === state.playerId) {
+            state.damageFlash = 0.9;
+            playHitSound();
+          }
+        }
+        if (player.lastDashAt > previous.lastDashAt) {
+          visuals.dashPulse = 1;
+          if (player.id === state.playerId) {
+            playDashSound();
+          }
+        }
+        if (player.reloading && !previous.reloading) {
+          if (player.id === state.playerId) {
+            playReloadSound();
+          }
+        }
+      });
+
       updateHud();
 
       if (payload.room.status === "live") {
@@ -513,6 +648,7 @@ function joinMatch() {
     return;
   }
 
+  ensureAudio();
   state.playerName = nickname;
   state.socket.send(JSON.stringify({ type: "join", name: nickname }));
   state.joined = true;
@@ -535,12 +671,17 @@ function sendInput() {
       left: state.keys.left,
       right: state.keys.right,
       shoot: state.mouse.down,
+      reload: state.actions.reload,
+      dash: state.actions.dash,
     },
     aim: {
       x: state.mouse.x,
       y: state.mouse.y,
     },
   }));
+
+  state.actions.reload = false;
+  state.actions.dash = false;
 }
 
 function pointerToWorld(event) {
@@ -561,7 +702,14 @@ function renderFrame() {
   const delta = visuals.clock.getDelta();
   syncPlayersToScene(delta);
   syncBulletsToScene();
+  updateImpacts(delta);
   updateCamera(delta);
+
+  if (state.damageFlash > 0) {
+    state.damageFlash = Math.max(0, state.damageFlash - delta * 2.2);
+  }
+  elements.damageFlash.style.opacity = `${state.damageFlash * 0.42}`;
+
   visuals.renderer.render(visuals.scene, visuals.camera);
   requestAnimationFrame(renderFrame);
 }
@@ -574,6 +722,8 @@ function registerEvents() {
     if (key === "s") state.keys.down = true;
     if (key === "a") state.keys.left = true;
     if (key === "d") state.keys.right = true;
+    if (key === "r") state.actions.reload = true;
+    if (key === "shift" || event.code === "Space") state.actions.dash = true;
   });
   window.addEventListener("keyup", (event) => {
     const key = event.key.toLowerCase();

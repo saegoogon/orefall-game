@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" role="img" aria-labelledby="title desc">
+  <title id="title">Wi-Fi hero illustration</title>
+  <desc id="desc">An abstract smart home Wi-Fi illustration with floating devices and signal waves.</desc>
+  <defs>
+    <linearGradient id="card" x1="80" y1="60" x2="420" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#11243a" />
+      <stop offset="1" stop-color="#08111d" />
+    </linearGradient>
+    <linearGradient id="signal" x1="160" y1="90" x2="340" y2="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ef7c2" />
+      <stop offset="1" stop-color="#7ce4ff" />
+    </linearGradient>
+  </defs>
+  <rect width="520" height="380" rx="36" fill="url(#card)" />
+  <circle cx="112" cy="90" r="68" fill="#7ce4ff" opacity="0.08" />
+  <circle cx="418" cy="290" r="86" fill="#ffcf6b" opacity="0.08" />
+  <rect x="122" y="198" width="110" height="92" rx="24" fill="#10263d" stroke="#274766" />
+  <rect x="286" y="150" width="120" height="104" rx="24" fill="#10263d" stroke="#274766" />
+  <rect x="146" y="222" width="62" height="8" rx="4" fill="#7ce4ff" opacity="0.75" />
+  <rect x="146" y="240" width="46" height="8" rx="4" fill="#8ef7c2" opacity="0.72" />
+  <rect x="314" y="178" width="62" height="8" rx="4" fill="#7ce4ff" opacity="0.75" />
+  <rect x="314" y="196" width="54" height="8" rx="4" fill="#8ef7c2" opacity="0.72" />
+  <circle cx="260" cy="118" r="20" fill="#ffcf6b" />
+  <path d="M188 120c36-40 108-40 144 0" fill="none" stroke="url(#signal)" stroke-width="10" stroke-linecap="round" />
+  <path d="M214 150c22-24 70-24 92 0" fill="none" stroke="url(#signal)" stroke-width="10" stroke-linecap="round" />
+  <path d="M238 180c9-10 35-10 44 0" fill="none" stroke="url(#signal)" stroke-width="10" stroke-linecap="round" />
+  <path d="M190 248 246 138" fill="none" stroke="#7ce4ff" stroke-width="3" stroke-dasharray="8 10" opacity="0.7" />
+  <path d="M347 202 276 137" fill="none" stroke="#8ef7c2" stroke-width="3" stroke-dasharray="8 10" opacity="0.7" />
+</svg>

@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="ring" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ff5a7a"/>
-      <stop offset="1" stop-color="#59d8ff"/>
+    <linearGradient id="bg" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ef7c2" />
+      <stop offset="1" stop-color="#7ce4ff" />
+    </linearGradient>
+    <linearGradient id="wave" x1="16" y1="18" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#dffaff" />
     </linearGradient>
   </defs>
-  <rect x="6" y="6" width="52" height="52" rx="16" fill="#0a1022"/>
-  <circle cx="32" cy="32" r="15" fill="none" stroke="url(#ring)" stroke-width="5"/>
-  <path d="M32 12v10M32 42v10M12 32h10M42 32h10" stroke="#ffcb61" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="32" cy="32" r="4" fill="#eef5ff"/>
+  <rect x="5" y="5" width="54" height="54" rx="18" fill="#07111f" />
+  <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#bg)" opacity="0.18" />
+  <path d="M20 31c6-7 18-7 24 0" fill="none" stroke="url(#wave)" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M25 37c3.8-4.2 10.2-4.2 14 0" fill="none" stroke="url(#wave)" stroke-width="4.5" stroke-linecap="round" />
+  <circle cx="32" cy="44" r="3.8" fill="#ffcf6b" />
 </svg>

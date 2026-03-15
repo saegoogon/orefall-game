@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 72" role="img" aria-labelledby="title desc">
+  <title id="title">WiFi Spot logo</title>
+  <desc id="desc">A stylized Wi-Fi signal icon with the WiFi Spot wordmark.</desc>
+  <defs>
+    <linearGradient id="wifiGlow" x1="16" y1="12" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8ef7c2" />
+      <stop offset="1" stop-color="#7ce4ff" />
+    </linearGradient>
+  </defs>
+  <g>
+    <rect x="4" y="4" width="64" height="64" rx="22" fill="#07111f" />
+    <rect x="7" y="7" width="58" height="58" rx="20" fill="url(#wifiGlow)" opacity="0.14" />
+    <path d="M22 34c9-10 27-10 36 0" fill="none" stroke="url(#wifiGlow)" stroke-width="5" stroke-linecap="round" />
+    <path d="M29 43c5.3-5.8 13.7-5.8 19 0" fill="none" stroke="url(#wifiGlow)" stroke-width="5" stroke-linecap="round" />
+    <circle cx="38.5" cy="51" r="4.5" fill="#ffcf6b" />
+  </g>
+  <g fill="#f4fbff">
+    <text x="86" y="31" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="24" font-weight="700" letter-spacing="0.04em">WiFi</text>
+    <text x="86" y="54" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="24" font-weight="700" letter-spacing="0.04em">Spot</text>
+  </g>
+</svg>

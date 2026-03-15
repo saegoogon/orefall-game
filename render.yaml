@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: gung
+    name: gungs
     runtime: node
     plan: free
     buildCommand: npm install --omit=dev
@@ -11,6 +11,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: APP_NAME
-        value: gung
+        value: gungs
       - key: ADSENSE_CLIENT
         sync: false

@@ -20,7 +20,7 @@ const elements = {
 };
 
 const state = {
-  appName: "gung",
+  appName: "gungs",
   adsenseClient: "",
   socket: null,
   connected: false,

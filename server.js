@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 const { URL } = require("node:url");
 
 const PORT = Number(process.env.PORT || 3000);
-const APP_NAME = process.env.APP_NAME || "gung";
+const APP_NAME = process.env.APP_NAME || "gungs";
 const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT || "";
 
 const ROOT = __dirname;
